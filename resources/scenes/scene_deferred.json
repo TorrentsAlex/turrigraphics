@@ -1,0 +1,61 @@
+{
+	"skybox": {
+		"name" : "skybox",
+		"object": "../resources/objects/skybox.obj",
+		"texture": "../resources/images/skybox.png",
+		"material" : "../resources/materials/metal.json",
+		"cubemap" : [
+			 "../resources/images/skybox_learn/right.jpg",
+			 "../resources/images/skybox_learn/left.jpg",
+			 "../resources/images/skybox_learn/top.jpg",
+			"../resources/images/skybox_learn/bottom.jpg",
+			 "../resources/images/skybox_learn/front.jpg",
+			"../resources/images/skybox_learn/back.jpg"
+			]
+	},
+	"terrain": {
+		"name" : "terrain",
+		"object": "../resources/objects/plane.obj",
+		"texture": "../resources/images/pavement.png",
+		"specularMap" : "../resources/images/floorS.png"
+	},
+	"decoration" : [
+		{
+			"name" : "teapot",
+			"object" : "../resources/objects/car.obj",
+			"texture" : "../resources/images/c1.png",
+			"specularMap" : "../resources/images/black.png",
+			"position": {
+				"x" : -150,
+				"y" : 0,
+				"z" : 0
+			}
+		},
+		{
+			"name" : "lamp",
+			"object" : "../resources/objects/town_building.obj",
+			"texture" : "../resources/images/town.png",
+			"specularMap" : "../resources/images/black.png",
+			"position": {
+				"x" : 50,
+				"y" : 0,
+				"z" : 0
+			}
+		},
+		{
+			"name" : "sphere",
+			"object" : "../resources/objects/sphere.obj",
+			"texture" : "../resources/images/red.png",
+			"specularMap" : "../resources/images/sphere_specular.png",
+			"position": {
+				"x" : 0,
+				"y" : 25,
+				"z" : 50
+			}
+		}
+	],
+	"lights" : [
+		"../resources/materials/lights/dir_blue.json",
+		"../resources/materials/lights/point_red.json"
+		]
+}
