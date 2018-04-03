@@ -16,15 +16,17 @@
 	"terrain": {
 		"name" : "terrain",
 		"object": "../resources/objects/plane.obj",
-		"texture": "../resources/images/pavement.png",
-		"specularMap" : "../resources/images/floorS.png"
+		"texture": "../resources/images/glass/glass_albedo.png",
+		"normalMap": "../resources/images/glass/glass_normal.png",
+		"specularMap" : "../resources/images/glass/mirror_nm.png"
 	},
 	"decoration" : [
 		{
 			"name" : "house",
 			"object" : "../resources/objects/village_house.obj",
 			"texture" : "../resources/images/village_house.png",
-			"specularMap" : "../resources/images/village_house.png",
+			"normalMap": "../resources/images/village_house_nm.png",
+			"specularMap" : "../resources/images/black.png",
 			"position": {
 				"x" : 39,
 				"y" : 0,
@@ -32,9 +34,22 @@
 			}
 		},
 		{
+			"name" : "plane",
+			"object" : "../resources/objects/quad_ten.obj",
+			"texture" : "../resources/images/checker.png",
+			"normalMap": "../resources/images/mirror_nm.png",
+			"specularMap" : "../resources/images/black.png",
+			"position": {
+				"x" : 0,
+				"y" : 50,
+				"z" : 0
+			}
+		},
+		{
 			"name" : "car1",
 			"object" : "../resources/objects/c1.obj",
 			"texture" : "../resources/images/c2.png",
+			"normalMap": "../resources/images/mirror_nm.png",
 			"specularMap" : "../resources/images/black.png",
 			"position": {
 				"x" : -10,
@@ -46,6 +61,7 @@
 			"name" : "car2",
 			"object" : "../resources/objects/c2.obj",
 			"texture" : "../resources/images/c2.png",
+			"normalMap": "../resources/images/mirror_nm.png",
 			"specularMap" : "../resources/images/black.png",
 			"position": {
 				"x" : -33,
@@ -57,6 +73,7 @@
 			"name" : "car3",
 			"object" : "../resources/objects/c3.obj",
 			"texture" : "../resources/images/c3.png",
+			"normalMap": "../resources/images/mirror_nm.png",
 			"specularMap" : "../resources/images/black.png",
 			"position": {
 				"x" : -55,
@@ -68,6 +85,7 @@
 			"name" : "spitfire",
 			"object" : "../resources/objects/spitfire.obj",
 			"texture" : "../resources/images/spitfire.png",
+			"normalMap": "../resources/images/mirror_nm.png",
 			"specularMap" : "../resources/images/black.png",
 			"position": {
 				"x" : 34,
