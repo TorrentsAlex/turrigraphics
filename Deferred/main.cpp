@@ -146,11 +146,15 @@ void initializeVAOVBO() {
 		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexPosition"));
 		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexUV"));
 		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexNormal"));
+		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexTangent"));
+		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexBitangent"));
 
 
 		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexPosition"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
 		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexUV"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
 		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexTangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexBitangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 
 		// unbind the VAO and VBO
 		glBindVertexArray(0);
@@ -303,7 +307,7 @@ void loadScene(std::string sceneToLoad) {
 	SceneCreator::Instance().createScene(sceneToLoad, *scene);
 }
 
-void sendObject(Vertex * data, GameObject object, int numVertices) {
+void sendObject(Vertex *data, GameObject object, int numVertices) {
 	glm::mat4 modelMatrix;
 	glm::mat3 normalMatrix;
 
@@ -316,6 +320,7 @@ void sendObject(Vertex * data, GameObject object, int numVertices) {
 	normalMatrix = glm::mat3(glm::transpose(glm::inverse(modelMatrix)));
 
 	GBuffer::sendUniform(shaderGBuffer, "modelMatrix", modelMatrix);
+	GBuffer::sendUniform(shaderGBuffer, "modelMatrix3x3", glm::mat3(modelMatrix));
 	GBuffer::sendUniform(shaderGBuffer, "modelNormalMatrix", normalMatrix);
 
 	GBuffer::sendDataToGPU(data, numVertices);
@@ -331,6 +336,7 @@ void renderScene() {
 		GBuffer::sendTexture(shaderGBuffer, "textureData", decor.e->getMaterial().textureMap, GL_TEXTURE0, 0);
 		if (decor.e->getMaterial().specularMap != -1) {
 			GBuffer::sendTexture(shaderGBuffer, "materialMap", decor.e->getMaterial().specularMap, GL_TEXTURE1, 1);
+			GBuffer::sendTexture(shaderGBuffer, "normalMap", decor.e->getMaterial().normalMap, GL_TEXTURE2, 2);
 			GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
 		} else {
 			GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", false);
@@ -344,6 +350,7 @@ void renderScene() {
 	GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(10.0f));
 	GBuffer::sendTexture(shaderGBuffer, "textureData", scene->getTerrain().getMaterial().textureMap, GL_TEXTURE0, 0);
 	GBuffer::sendTexture(shaderGBuffer, "materialMap", scene->getTerrain().getMaterial().specularMap, GL_TEXTURE1, 1);
+	GBuffer::sendTexture(shaderGBuffer, "normalMap", scene->getTerrain().getMaterial().normalMap, GL_TEXTURE2, 2);
 	GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
 	sendObject(scene->getTerrain().getMesh(), scene->getTerrain().getGameObject(), scene->getTerrain().getNumVertices());
 	GBuffer::unbindTextures();
@@ -361,6 +368,7 @@ float dPos[] = {0.0, 0.0, 0.0};
 void GUI() {
 	if (ImGui::CollapsingHeader("window")) {
 		ImGui::Text("FPS: %f", fps._fps);
+		ImGui::Checkbox("limit fps", &fps._enable);
 
 	}
 

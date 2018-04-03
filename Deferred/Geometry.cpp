@@ -27,10 +27,42 @@ OBJ Geometry::LoadModelFromFile(std::string file) {
 			object.mesh[i].setUV(object.textures_coord.at(vt1).x, object.textures_coord.at(vt1).y);
 			object.mesh[i].setNormal(object.vertex_normals.at(vn1).x, object.vertex_normals.at(vn1).y, object.vertex_normals.at(vn1).z);
 		}
+		// Calculate tangents and bitangents
+		for (int i = 0; i < object.faces.size(); i += 3) {
+			glm::vec3 v0, v1, v2;
+			v0 = object.mesh[i + 0].position.toVec3();
+			v1 = object.mesh[i + 1].position.toVec3();
+			v2 = object.mesh[i + 2].position.toVec3();
+
+			glm::vec2 uv0, uv1, uv2;
+			uv0 = object.mesh[i + 0].uv.toVec2();
+			uv1 = object.mesh[i + 1].uv.toVec2();
+			uv2 = object.mesh[i + 2].uv.toVec2();
+
+			glm::vec3 deltaPos1 = v1 - v0;
+			glm::vec3 deltaPos2 = v2 - v0;
+			glm::vec2 deltaUV1 = uv1 - uv0;
+			glm::vec2 deltaUV2 = uv2 - uv0;
+
+			// calculate tangent and bitangent
+			float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+			glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+			glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
+
+			object.mesh[i + 0].setTangent(tangent.x, tangent.y, tangent.z);
+			object.mesh[i + 1].setTangent(tangent.x, tangent.y, tangent.z);
+			object.mesh[i + 2].setTangent(tangent.x, tangent.y, tangent.z);
+			
+			object.mesh[i + 0].setBitangent(bitangent.x, bitangent.y, bitangent.z);
+			object.mesh[i + 1].setBitangent(bitangent.x, bitangent.y, bitangent.z);
+			object.mesh[i + 2].setBitangent(bitangent.x, bitangent.y, bitangent.z);
+
+		}
 	} catch (std::exception e) {
 		std::cerr << "ERROR: " << iDebug << " i " << e.what() << std::endl;
 	}
 
+	// calculate the size of the object, not used now..
 	// We only need to know the vertex, the faces don't
 	for (int i = 0; i < object.vertexs.size(); i++) {
 		currentVertex = object.vertexs.at(i);

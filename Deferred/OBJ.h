@@ -12,10 +12,12 @@ struct OBJ {
 	vector<float> faces;
 	vector<float> uv;
 	vector<float> normals;
+	vector<float> tangent;
+	vector<float> bitangent;
 
 	// readed from file
 	vector<glm::vec3> vertexs;
-	vector<glm::vec3> textures_coord;
+	vector<glm::vec2> textures_coord;
 	vector<glm::vec3> vertex_normals;
 
 	glm::vec2 lenght;

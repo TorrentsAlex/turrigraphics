@@ -80,6 +80,7 @@ OBJ FileReader::LoadOBJFromFile(string fileName) {
 
 		vector<float> vline;
 		glm::vec3 vertex;
+		glm::vec2 uv;
 		while (getline(myfile, line)) {
 
 			// Vertexs
@@ -95,10 +96,9 @@ OBJ FileReader::LoadOBJFromFile(string fileName) {
 			if (line.substr(0, 2) == "vt") {
 				line = line.substr(2, line.size());
 				vline = split(line, ' ');
-				vertex.x = vline.at(1);
-				vertex.y = vline.at(2);
-				vertex.z = vline.at(3);
-				object.textures_coord.push_back(vertex);
+				uv.x = vline.at(1);
+				uv.y = vline.at(2);
+				object.textures_coord.push_back(uv);
 			}
 
 			// Normals

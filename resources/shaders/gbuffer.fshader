@@ -3,9 +3,12 @@
 in vec2 fragUV;
 in vec3 fragNormal;
 in vec3 fragPosition;
+in vec3 tangent;
+in vec3 bitangent;
 
 uniform sampler2D textureData;
 uniform sampler2D materialMap;
+uniform sampler2D normalMap;
 uniform int haveMaterialMap;
 
 uniform vec2 ab;
@@ -32,9 +35,16 @@ float linearDepth(float depth) {
 void main() {
 
 	float depth = linearDepth(gl_FragCoord.z)/far;
-	
+	// Calculate normal with fragment normal and normal normalMap
+	vec3 normalTexture = normalize(texture(normalMap, fragUV).rgb * 2.0 - 1.0);
+	vec3 atangent = normalize(tangent);
+	vec3 abitangent = normalize(bitangent);
+	mat3 tangentToWorld = mat3(atangent.x, abitangent.x, fragNormal.x,
+							   atangent.y, abitangent.y, fragNormal.y,
+							   atangent.z, abitangent.z, fragNormal.z);
+	vec3 normal = normalTexture * tangentToWorld;
 	gDiffuse = vec4(texture(textureData, fragUV).rgb, 1.0);
-	gNormal = vec4(sphereMap(fragNormal), depth, 1.0);
+	gNormal = vec4(sphereMap(normal), depth, 1.0);
 	gPosition = vec4(fragPosition, 1.0);
 
 	if (haveMaterialMap == 1) {

@@ -103,6 +103,7 @@ void SceneCreator::populateDecoration(Scene * scene, Json::Value decoration) {
 
 		string gameElements = currentDecoration["elements"].asString();
 		string textureSpecularString = currentDecoration["specularMap"].asString();
+		string normalString = currentDecoration["normalMap"].asString();
 
 		Entity* e = new Entity();
 		e->setOBJ(objDecoration);
@@ -116,7 +117,9 @@ void SceneCreator::populateDecoration(Scene * scene, Json::Value decoration) {
 		//set specular material
 		if (textureSpecularString.compare("") != 0) {
 			GLuint specular = TextureManager::Instance().getTextureID(textureSpecularString);
+			GLuint normalMap = TextureManager::Instance().getTextureID(normalString);
 			e->setTextureSpecular(specular);
+			e->eMaterial.normalMap = normalMap;
 		}
 
 		GameObject gameObject;
@@ -160,10 +163,12 @@ void SceneCreator::populateTerrain(Scene * scene, Json::Value terrain) {
 	OBJ objTerrain = Geometry::LoadModelFromFile(terrain["terrain"]["object"].asString());
 
 	GLuint textureTerrain = TextureManager::Instance().getTextureID(terrain["terrain"]["texture"].asString());
+	GLuint normalTerrain = TextureManager::Instance().getTextureID(terrain["terrain"]["texture"].asString());
 
 	GLuint textureSpecular = TextureManager::Instance().getTextureID(terrain["terrain"]["specularMap"].asString());
 
 	metalMaterial.specularMap = textureSpecular;
+	metalMaterial.normalMap = normalTerrain;
 	scene->setTerrain(objTerrain, textureTerrain, metalMaterial);
 
 	metalMaterial.specularMap = -1;
