@@ -18,9 +18,21 @@
 		"object": "../resources/objects/plane.obj",
 		"texture": "../resources/images/glass/glass_albedo.png",
 		"normalMap": "../resources/images/glass/glass_normal.png",
-		"specularMap" : "../resources/images/glass/mirror_nm.png"
+		"specularMap" : "../resources/images/mirror_nm.png"
 	},
 	"decoration" : [
+		{
+			"name" : "plane",
+			"object" : "../resources/objects/sphere.obj",
+			"texture" : "../resources/images/rusted_iron/albedo.png",
+			"normalMap": "../resources/images/rusted_iron/normal.png",
+			"specularMap" : "../resources/images/rusted_iron/metallic.png",
+			"position": {
+				"x" : 0,
+				"y" : 50,
+				"z" : 0
+			}
+		},
 		{
 			"name" : "house",
 			"object" : "../resources/objects/village_house.obj",
@@ -33,18 +45,7 @@
 				"z" : 35
 			}
 		},
-		{
-			"name" : "plane",
-			"object" : "../resources/objects/quad_ten.obj",
-			"texture" : "../resources/images/checker.png",
-			"normalMap": "../resources/images/mirror_nm.png",
-			"specularMap" : "../resources/images/black.png",
-			"position": {
-				"x" : 0,
-				"y" : 50,
-				"z" : 0
-			}
-		},
+
 		{
 			"name" : "car1",
 			"object" : "../resources/objects/c1.obj",

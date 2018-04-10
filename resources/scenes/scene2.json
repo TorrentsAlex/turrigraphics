@@ -1,0 +1,77 @@
+{
+	"skybox": {
+		"name" : "skybox",
+		"object": "../resources/objects/skybox.obj",
+		"texture": "../resources/images/skybox.png",
+		"material" : "../resources/materials/metal.json",
+		"cubemap" : [
+			 "../resources/images/skybox_learn/right.jpg",
+			 "../resources/images/skybox_learn/left.jpg",
+			 "../resources/images/skybox_learn/top.jpg",
+			"../resources/images/skybox_learn/bottom.jpg",
+			 "../resources/images/skybox_learn/front.jpg",
+			"../resources/images/skybox_learn/back.jpg"
+			]
+	},
+	"terrain": {
+		"name" : "terrain",
+		"object": "../resources/objects/plane.obj",
+		"texture": "../resources/images/glass/glass_albedo.png",
+		"normalMap": "../resources/images/glass/glass_normal.png",
+		"specularMap" : "../resources/images/mirror_nm.png"
+	},
+	"decoration" : [
+		{
+			"name" : "sphere",
+			"object" : "../resources/objects/sphere.obj",
+			"texture" : "../resources/images/rusted_iron/albedo.png",
+			"normalMap": "../resources/images/rusted_iron/normal.png",
+			"specularMap" : "../resources/images/rusted_iron/metallic.png",
+			"position": {
+				"x" : 0,
+				"y" : 50,
+				"z" : 0
+			}
+		},
+		{
+			"name" : "plane",
+			"object" : "../resources/objects/quad_ten.obj",
+			"texture" : "../resources/images/checker.png",
+			"normalMap": "../resources/images/mirror_nm.png",
+			"specularMap" : "../resources/images/black.png",
+			"position": {
+				"x" : 25,
+				"y" : 50,
+				"z" : 0
+			}
+        },
+		{
+			"name" : "rock",
+			"object" : "../resources/objects/sphere.obj",
+			"texture" : "../resources/images/rock/albedo.png",
+			"normalMap": "../resources/images/rock/normal.png",
+			"specularMap" : "../resources/images/black.png",
+			"position": {
+				"x" : 0,
+				"y" : 50,
+				"z" : 25
+			}
+        },
+		{
+			"name" : "rock",
+			"object" : "../resources/objects/quad_ten.obj",
+			"texture" : "../resources/images/rock/albedo.png",
+			"normalMap": "../resources/images/rock/normal.png",
+			"specularMap" : "../resources/images/black.png",
+			"position": {
+				"x" : 25,
+				"y" : 50,
+				"z" : 25
+			}
+		}
+	],
+	"lights" : [
+        "../resources/materials/lights/dir_blue.json",
+		"../resources/materials/lights/point_red.json"
+    ]
+}

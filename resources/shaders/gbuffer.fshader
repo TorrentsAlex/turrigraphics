@@ -9,6 +9,8 @@ in vec3 bitangent;
 uniform sampler2D textureData;
 uniform sampler2D materialMap;
 uniform sampler2D normalMap;
+uniform sampler2D roughness;
+
 uniform int haveMaterialMap;
 
 uniform vec2 ab;
@@ -43,12 +45,16 @@ void main() {
 							   atangent.y, abitangent.y, fragNormal.y,
 							   atangent.z, abitangent.z, fragNormal.z);
 	vec3 normal = normalTexture * tangentToWorld;
+
+
+	vec3 roug = texture(roughness, fragUV).rgb;
 	gDiffuse = vec4(texture(textureData, fragUV).rgb, 1.0);
 	gNormal = vec4(sphereMap(normal), depth, 1.0);
 	gPosition = vec4(fragPosition, 1.0);
 
 	if (haveMaterialMap == 1) {
 		gMaterial = vec4(texture(materialMap, fragUV).rgb, 1.0);
+		gMaterial.g = roug.r;
 	} else {
 		gMaterial = vec4(vec3(0.0), 1.0);
 	}

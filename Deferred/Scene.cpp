@@ -30,10 +30,6 @@ void Scene::setTerrain(OBJ object, GLuint texture, Material material) {
 	sTerrain.setGameObject(terrainObject);
 }
 
-void Scene::setDecoration(std::vector<Entity> decoration) {
-	sDecoration = decoration;
-}
-
 void Scene::setLights(vector<Light> lights) {
 	sLights = lights;
 }
@@ -41,28 +37,6 @@ void Scene::setLights(vector<Light> lights) {
 void Scene::setCubemap(GLuint cubemap) {
 	sCubemap = cubemap;
 }
-
-// Getters
-Entity Scene::getTerrain() {
-	return sTerrain;
-}
-
-Entity Scene::getSkyBox() {
-	return sSkybox;
-}
-
-std::vector<Entity> Scene::getDecoration() {
-	return sDecoration;
-}
-
-vector<Light>& Scene::getLights() {
-	return sLights;
-}
-
-GLuint Scene::getCubemap() {
-	return sCubemap;
-}
-
 
 void Scene::clean() {
 

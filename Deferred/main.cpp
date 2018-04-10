@@ -20,7 +20,8 @@
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
-const glm::vec2 screenSize = {960, 540};
+//const glm::vec2 screenSize = {960, 540};
+const glm::vec2 screenSize = { 1920, 1080};
 //
 Camera camera;
 FPSLimiter fps = FPSLimiter(true, 60, false);
@@ -344,15 +345,15 @@ void renderScene() {
 
 		sendObject(decor.e->getMesh(), decor.g.at(0), decor.e->getNumVertices());
 
-		GBuffer::unbindTextures();
+		//GBuffer::unbindTextures();
 	}
 
-	GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(10.0f));
-	GBuffer::sendTexture(shaderGBuffer, "textureData", scene->getTerrain().getMaterial().textureMap, GL_TEXTURE0, 0);
-	GBuffer::sendTexture(shaderGBuffer, "materialMap", scene->getTerrain().getMaterial().specularMap, GL_TEXTURE1, 1);
-	GBuffer::sendTexture(shaderGBuffer, "normalMap", scene->getTerrain().getMaterial().normalMap, GL_TEXTURE2, 2);
+	/*GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(10.0f));
+	GBuffer::sendTexture(shaderGBuffer, "textureData", scene->sTerrain.getMaterial().textureMap, GL_TEXTURE0, 0);
+	GBuffer::sendTexture(shaderGBuffer, "materialMap", scene->sTerrain.getMaterial().specularMap, GL_TEXTURE1, 1);
+	GBuffer::sendTexture(shaderGBuffer, "normalMap", scene->sTerrain.getMaterial().normalMap, GL_TEXTURE2, 2);
 	GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
-	sendObject(scene->getTerrain().getMesh(), scene->getTerrain().getGameObject(), scene->getTerrain().getNumVertices());
+	sendObject(scene->sTerrain.getMesh(), scene->sTerrain.getGameObject(), scene->sTerrain.getNumVertices());*/
 	GBuffer::unbindTextures();
 
 	GBuffer::unbindVertexUnbindBuffer();
@@ -369,6 +370,7 @@ void GUI() {
 	if (ImGui::CollapsingHeader("window")) {
 		ImGui::Text("FPS: %f", fps._fps);
 		ImGui::Checkbox("limit fps", &fps._enable);
+		ImGui::SliderFloat("velocity", &camera.velocity, 0.0f, 0.2f);
 
 	}
 
@@ -376,12 +378,12 @@ void GUI() {
 		if (ImGui::ColorEdit3("color", dColor)) {
 			directionalColor = glm::vec3(dColor[0], dColor[1], dColor[2]);
 		}
-		ImGui::SliderFloat3("direction", (float*)&scene->getLights()[0].getPosition(), -1.0f, 1.0f);
+		ImGui::SliderFloat3("direction", (float*)&scene->sLights[0].getPosition(), -1.0f, 1.0f);
 
 	}
 	if (ImGui::CollapsingHeader("Reload")) {
 		if (ImGui::Button("Shaders")) compileShaders();
-		if (ImGui::Button("Scene"))	loadScene("../resources/scenes/rustic.json");
+		if (ImGui::Button("Scene"))	loadScene("../resources/scenes/scene2.json");
 	}
 	//ImGui::SliderFloat("viggneting", &vignneting_radious,  0.0f, 5.0f);
 	// posProces
@@ -422,13 +424,15 @@ int main(int argc, char** argv) {
 	initializeVAOVBO();
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
-	loadScene("../resources/scenes/rustic.json");
+	loadScene("../resources/scenes/scene2.json");
 	
 	// IMGUI INIT
 	std::string imInit = ImGui_ImplSdlGL3_Init(window.getWindow()) ? "true" : "false";
 	std::cout << "Imgui Init " << imInit << std::endl;
 
 	glEnable(GL_DEPTH_TEST);
+
+	GLuint roughness = TextureManager::Instance().getTextureID("../resources/images/rusted_iron/roughness.png");
 
 	bool isOpen = true;
 	while (isOpen) {
@@ -463,6 +467,7 @@ int main(int argc, char** argv) {
 			GBuffer::sendUniform(shaderGBuffer, "viewMatrix", camera.getViewMatrix());
 			GBuffer::sendUniform(shaderGBuffer, "projectionMatrix", camera.getProjectionCamera());
 			GBuffer::sendUniform(shaderGBuffer, "viewerPosition", camera.getPosition());
+			GBuffer::sendTexture(shaderGBuffer, "roughness", roughness, GL_TEXTURE3, 3);
 			// write geometry to stencil buffer
 			
 			// Send objects
@@ -490,7 +495,7 @@ int main(int argc, char** argv) {
 
 			GBuffer::bindVertexArrayBindBuffer(skyboxVAO, skyboxVBO);
 
-			GBuffer::sendCubemap(shaderSkybox, "skybox", scene->getCubemap());
+			GBuffer::sendCubemap(shaderSkybox, "skybox", scene->sCubemap);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 			GBuffer::unbindVertexUnbindBuffer();
@@ -514,12 +519,12 @@ int main(int argc, char** argv) {
 			GBuffer::sendTexture(shaderPBR, "gSpec", buffSPEC, GL_TEXTURE3, 3);
 			GBuffer::sendTexture(shaderPBR, "skybox", buffSkybox, GL_TEXTURE4, 4);
 
-			GBuffer::sendCubemap(shaderPBR, "cubemap", scene->getCubemap());
+			GBuffer::sendCubemap(shaderPBR, "cubemap", scene->sCubemap);
 			
 			GBuffer::sendUniform(shaderPBR, "cubemapActive", postpro == postproces::CUBEMAP ? 1 : 0);
 			
 			int count = 0;
-			for (Light l : scene->getLights()) {
+			for (Light l : scene->sLights) {
 				GBuffer::sendUniform(shaderPBR, "lights["+ std::to_string(count) +"].type", l.getType());
 				if (l.getType() == LIGHT_DIRECTIONAL) {
 					GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].amb", directionalColor);

@@ -13,13 +13,13 @@ class FPSLimiter {
 	float _startTicks;						//Stores the initial value of the counter
 	float _previousTickFrame;				//Ticks of the past frame
 	bool _printFPS;							//Print (or not) the average of FPS
-	bool _enable;							//Limits or not the FPS
 
 
 	// Calculates the current FPS
 	void updateAverageFPS();
 public:	
 	float _fps;								//Current _fps based on the average of the last 10 rendered frames
+	bool _enable;							//Limits or not the FPS
 
 	//Initialize the max FPS
 	FPSLimiter(bool enable, int maxFPS, bool printFPS);

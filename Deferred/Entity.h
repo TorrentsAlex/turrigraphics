@@ -24,12 +24,13 @@ protected:
 	OBJ eMesh;
 	GameObject eGameObject;
 
-	Material eMaterial;
 
 private:
 	void calculateVolume();
 
-public:
+public:	
+	Material eMaterial;
+
 	Entity();
 	Entity(OBJ mesh, GameObject gameObject);
 	~Entity();

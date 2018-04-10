@@ -13,16 +13,12 @@ struct DecorObjects {
 };
 
 class Scene {
-private:
+public:
 	Entity sSkybox;
 	Entity sTerrain;
 
-	/* Variable deprecated, using DecorObjects for render */
-	vector<Entity> sDecoration;
-
 	GLuint sCubemap;
 
-public:
 	Scene();
 	~Scene();
 	vector<Light> sLights;
@@ -31,16 +27,14 @@ public:
 	// Setters
 	void setSkyBox(OBJ object, GLuint texture);
 	void setTerrain(OBJ object, GLuint texture, Material material);
-	void setDecoration(vector<Entity> decoration);
 	void setLights(vector<Light> lights);
 	void setCubemap(GLuint cubemap);
 
 	// Getters
-	Entity getTerrain();
+	/*Entity getTerrain();
 	Entity getSkyBox();
-	vector<Entity> getDecoration();
 	vector<Light> &getLights();
-	GLuint getCubemap();
+	GLuint getCubemap();*/
 
 	void clean();
 	void update();

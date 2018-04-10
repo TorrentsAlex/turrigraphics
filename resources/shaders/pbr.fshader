@@ -71,6 +71,9 @@ vec4 calcColor() {
 	//r: specular, g: roughness, b: metallic
 	vec3 material = texture(gSpec, fragUV).rgb;
 	vec3 worldPos = texture(gPos, fragUV).rgb;
+	float spec = material.r; // r
+	float roug = material.g; // g
+	float metal = material.b; // b
 
 	vec3 V = normalize(viewerPosition - worldPos);
 	vec3 N = normalize(normalT);
@@ -89,23 +92,20 @@ vec4 calcColor() {
 		float NdotH = max(0.0, dot(N, H));
 		float NdotL = max(0.0, dot(N, L));
 
-		vec3 diffuse = albedo.rgb * clamp(NdotL, 0.0, 1.0) * (1.0 - material.b);
+		vec3 diffuse = albedo.rgb * clamp(NdotL, 0.0, 1.0) * (1.0 - metal);
 
 		// ambient color + PBR
 		vec3 nom = fresnel(VdotH, vec3(1.0)) *
-							 dBeckmann(NdotH, material.g) *
+							 dBeckmann(NdotH, roug) *
 							 gCookTorrance(NdotV, VdotH, NdotH);
 
-		vec3 specular = ((1.0 - material.b) + material.b * albedo.rgb) * (nom / 4.0 * NdotV * NdotL);
+		vec3 specular = ((1.0 - metal) + metal * albedo.rgb) * (nom / 4.0 * NdotV * NdotL);
 
 		float dist = length(l.pos - worldPos);
 
 		// Don't have attenuation if it's directional
 		float attenuation = (l.type == 0) ?  1.0 : (5000.0 / (dist * dist));
 
-		if (material.r > 0.7) {
-			diffuse = vec3(0.1);
-		}
 		color.rgb += l.amb * (diffuse+specular) * attenuation;
 	}
 	//color.rgb /= maxlights;

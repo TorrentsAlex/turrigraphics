@@ -11,7 +11,8 @@
 enum class CameraMove{ none, forward, backwards, left, right,  up, down};
 
 class Camera {
-private:
+public:
+	
 	float cAspectRatio;
 	glm::mat4 cProjectionMatrix;
 	glm::mat4 cViewMatrix;
@@ -38,7 +39,6 @@ private:
 
 	bool firstEntry = true;
 
-public:
 	Camera();
 	Camera(Camera& c);
 	~Camera();
