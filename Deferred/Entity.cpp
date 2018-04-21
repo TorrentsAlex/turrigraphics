@@ -50,8 +50,8 @@ void Entity::setTextureId(GLuint textureId) {
 	eMaterial.textureMap = textureId;
 }
 
-void Entity::setTextureSpecular(GLuint specularId) {
-	eMaterial.specularMap = specularId;
+void Entity::setTextureMetallic(GLuint specularId) {
+	eMaterial.metallicMap = specularId;
 }
 
 void Entity::setMaterial(Material material) {

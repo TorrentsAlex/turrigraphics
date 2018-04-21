@@ -30,7 +30,7 @@ vector<Light> SceneCreator::populateLights(Json::Value jsonLights) {
 
 	for (auto i = 0; i < jsonLights.size(); i++) {
 		Light l;
-		glm::vec3 ambient, diffuse, specular, position, direction;
+		glm::vec3 ambient, diffuse, metallic, position, direction;
 
 		Json::Value currentLight;
 		string stringlight = FileReader::LoadStringFromFile(jsonLights[i].asString());
@@ -46,9 +46,9 @@ vector<Light> SceneCreator::populateLights(Json::Value jsonLights) {
 		diffuse.g = currentLight["diffuse"]["g"].asFloat();
 		diffuse.b = currentLight["diffuse"]["b"].asFloat();
 
-		specular.r = currentLight["specular"]["r"].asFloat();
-		specular.g = currentLight["specular"]["g"].asFloat();
-		specular.b = currentLight["specular"]["b"].asFloat();
+		metallic.r = currentLight["metallic"]["r"].asFloat();
+		metallic.g = currentLight["metallic"]["g"].asFloat();
+		metallic.b = currentLight["metallic"]["b"].asFloat();
 
 		// position
 		position.x = currentLight["position"]["x"].asFloat();
@@ -79,7 +79,7 @@ vector<Light> SceneCreator::populateLights(Json::Value jsonLights) {
 		// set the values into the light
 		l.setAmbient(ambient);
 		l.setDiffuse(diffuse);
-		l.setSpecular(specular);
+		l.setSpecular(metallic);
 		l.setDirection(direction);
 		l.setPosition(position);
 
@@ -102,7 +102,8 @@ void SceneCreator::populateDecoration(Scene * scene, Json::Value decoration) {
 		GLuint textureDecoration = TextureManager::Instance().getTextureID(currentDecoration["texture"].asString());
 
 		string gameElements = currentDecoration["elements"].asString();
-		string textureSpecularString = currentDecoration["specularMap"].asString();
+		string texturemetallicString = currentDecoration["metallicMap"].asString();
+		string textureroughnessString = currentDecoration["roughnessMap"].asString();
 		string normalString = currentDecoration["normalMap"].asString();
 
 		Entity* e = new Entity();
@@ -114,12 +115,14 @@ void SceneCreator::populateDecoration(Scene * scene, Json::Value decoration) {
 		DecorObjects d;
 		d.e = e;
 
-		//set specular material
-		if (textureSpecularString.compare("") != 0) {
-			GLuint specular = TextureManager::Instance().getTextureID(textureSpecularString);
+		//set metallic material
+		if (texturemetallicString.compare("") != 0) {
+			GLuint metallic = TextureManager::Instance().getTextureID(texturemetallicString);
+			GLuint roughness = TextureManager::Instance().getTextureID(textureroughnessString);
 			GLuint normalMap = TextureManager::Instance().getTextureID(normalString);
-			e->setTextureSpecular(specular);
+			e->eMaterial.metallicMap = metallic;
 			e->eMaterial.normalMap = normalMap;
+			e->eMaterial.roughnessMap = roughness;
 		}
 
 		GameObject gameObject;
@@ -144,9 +147,6 @@ void SceneCreator::populateTerrain(Scene * scene, Json::Value terrain) {
 	cout << "skybox..." << endl;
 	// Terrain
 	OBJ objSkybox = Geometry::LoadModelFromFile(terrain["skybox"]["object"].asString());
-	GLuint textureSkybox = TextureManager::Instance().getTextureID(terrain["skybox"]["texture"].asString());
-
-	scene->setSkyBox(objSkybox, textureSkybox);
 
 	std::vector<std::string> cubemapsPaths;
 	Json::Value cubemaps = terrain["skybox"]["cubemap"];
@@ -163,14 +163,16 @@ void SceneCreator::populateTerrain(Scene * scene, Json::Value terrain) {
 	OBJ objTerrain = Geometry::LoadModelFromFile(terrain["terrain"]["object"].asString());
 
 	GLuint textureTerrain = TextureManager::Instance().getTextureID(terrain["terrain"]["texture"].asString());
-	GLuint normalTerrain = TextureManager::Instance().getTextureID(terrain["terrain"]["texture"].asString());
+	GLuint normalTerrain = TextureManager::Instance().getTextureID(terrain["terrain"]["normalMap"].asString());
 
-	GLuint textureSpecular = TextureManager::Instance().getTextureID(terrain["terrain"]["specularMap"].asString());
+	GLuint texturemetallic = TextureManager::Instance().getTextureID(terrain["terrain"]["metallicMap"].asString());
+	GLuint textureroughness = TextureManager::Instance().getTextureID(terrain["terrain"]["roughnessMap"].asString());
 
-	metalMaterial.specularMap = textureSpecular;
+	metalMaterial.roughnessMap = textureroughness;
+	metalMaterial.metallicMap = texturemetallic;
 	metalMaterial.normalMap = normalTerrain;
 	scene->setTerrain(objTerrain, textureTerrain, metalMaterial);
 
-	metalMaterial.specularMap = -1;
+	metalMaterial.metallicMap = -1;
 
 }

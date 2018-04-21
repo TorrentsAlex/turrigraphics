@@ -16,16 +16,16 @@ protected:
 	float lLinear;
 	float lQuadratic;
 
-	glm::vec3 lAmbient;
 	glm::vec3 lDiffuse;
 	glm::vec3 lSpecular;
 
-	glm::vec3 lDirection;
 
 	float lPower;
 
 public:
 	glm::vec3 lPosition;
+	glm::vec3 lAmbient;
+	glm::vec3 lDirection;
 
 	Light();
 	Light(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);

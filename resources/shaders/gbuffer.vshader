@@ -1,8 +1,8 @@
 #version 330
 
 in vec3 vertexPosition;
-in vec2 vertexUV;
 in vec3 vertexNormal;
+in vec2 vertexUV;
 in vec3 vertexTangent;
 in vec3 vertexBitangent;
 

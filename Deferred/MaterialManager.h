@@ -22,7 +22,8 @@ struct Material {
 
 	GLuint textureMap;
 	GLuint normalMap = -1;
-	GLuint specularMap = -1;
+	GLuint metallicMap = -1;
+	GLuint roughnessMap = -1;
 
 	glm::vec2 scale = glm::vec2(1.0f);
 };

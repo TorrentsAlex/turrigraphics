@@ -129,3 +129,11 @@ GLuint TextureManager::getTextureCubemapID(std::vector<std::string> filePath) {
 
 	return load3DTexture(filePath);
 }
+
+
+bool TextureManager::saveTexture2File(std::string name, int w, int h) {
+	std::string path = "../resources/output/" + name;
+
+	int ret = SOIL_save_screenshot(name.c_str(), SOIL_SAVE_TYPE_BMP, 0, 0, w, h);
+	return true;
+}

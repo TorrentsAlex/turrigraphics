@@ -18,17 +18,15 @@ struct GameObject {
 };
 
 class Entity {
-protected:
+public:
 	string id;
 
 	OBJ eMesh;
 	GameObject eGameObject;
 
 
-private:
 	void calculateVolume();
 
-public:	
 	Material eMaterial;
 
 	Entity();
@@ -40,7 +38,7 @@ public:
 	void setGameObject(GameObject gameObject);
 	void setId(string name);
 	void setTextureId(GLuint textureId);
-	void setTextureSpecular(GLuint specularId);
+	void setTextureMetallic(GLuint specularId);
 
 	void setPosition(glm::vec3 newPos);
 	void setPosition(glm::vec2 newPos);

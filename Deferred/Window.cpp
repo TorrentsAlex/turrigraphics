@@ -44,9 +44,9 @@ int Window::create(string windowName, int screenWidth, int screenHeight, unsigne
 	if (currentFlags & (unsigned int)WindowFlags::INVISIBLE) {
 		flags |= SDL_WINDOW_HIDDEN;
 	}
-	//if (currentFlags & (unsigned int)WindowFlags::FULLSCREEN) {
+	if (currentFlags & (unsigned int)WindowFlags::FULLSCREEN) {
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-	//}
+	}
 	if (currentFlags & (unsigned int)WindowFlags::BORDERLESS) {
 		flags |= SDL_WINDOW_BORDERLESS;
 	}

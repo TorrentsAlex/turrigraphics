@@ -22,6 +22,8 @@ class TextureManager {
 public:
 	GLuint getTextureID(std::string filePath);
 	GLuint getTextureCubemapID(std::vector<std::string> filePath);
+	bool saveTexture2File(std::string name, int w, int h);
+
 	// Pattern singleton
 	static TextureManager& Instance() {
 		static TextureManager instance;

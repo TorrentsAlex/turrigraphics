@@ -21,7 +21,7 @@ void Scene::setTerrain(OBJ object, GLuint texture, Material material) {
 	GameObject terrainObject;
 	terrainObject.angle = 0;
 	terrainObject.translate = glm::vec3(0.0f, 0.0f, 0.0f);
-	terrainObject.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	terrainObject.scale = glm::vec3(10.0f, 10.0f, 10.0f);
 	terrainObject.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	sTerrain.setId("terrain");
 	sTerrain.setOBJ(object);

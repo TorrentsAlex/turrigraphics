@@ -7,6 +7,8 @@
 #define NUM_SAMPLES 10	//The number of frames to average
 
 class FPSLimiter { 
+public:
+
 	int _maxFPS;							//Maximum number of frames to render by second	
 	int _currentFrame;						//The position of the frameTime array that has be to updated
 	float _frameTimes[NUM_SAMPLES];			//Stores all the frametimes for each frame that we will average
@@ -17,7 +19,6 @@ class FPSLimiter {
 
 	// Calculates the current FPS
 	void updateAverageFPS();
-public:	
 	float _fps;								//Current _fps based on the average of the last 10 rendered frames
 	bool _enable;							//Limits or not the FPS
 

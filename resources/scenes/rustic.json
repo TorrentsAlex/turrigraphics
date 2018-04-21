@@ -2,8 +2,6 @@
 	"skybox": {
 		"name" : "skybox",
 		"object": "../resources/objects/skybox.obj",
-		"texture": "../resources/images/skybox.png",
-		"material" : "../resources/materials/metal.json",
 		"cubemap" : [
 			 "../resources/images/skybox_learn/right.jpg",
 			 "../resources/images/skybox_learn/left.jpg",
@@ -15,43 +13,33 @@
 	},
 	"terrain": {
 		"name" : "terrain",
-		"object": "../resources/objects/plane.obj",
-		"texture": "../resources/images/glass/glass_albedo.png",
-		"normalMap": "../resources/images/glass/glass_normal.png",
-		"specularMap" : "../resources/images/mirror_nm.png"
+		"object": "../resources/objects/terrain.obj",
+		"texture": "../resources/images/stonefloor/basecolor.png",
+		"normalMap": "../resources/images/stonefloor/normal.png",
+		"roughnessMap" : "../resources/images/stonefloor/roughness.png",
+		"metallicMap" : "../resources/images/stonefloor/metallic.png"
 	},
 	"decoration" : [
 		{
-			"name" : "plane",
-			"object" : "../resources/objects/sphere.obj",
-			"texture" : "../resources/images/rusted_iron/albedo.png",
-			"normalMap": "../resources/images/rusted_iron/normal.png",
-			"specularMap" : "../resources/images/rusted_iron/metallic.png",
-			"position": {
-				"x" : 0,
-				"y" : 50,
-				"z" : 0
-			}
-		},
-		{
-			"name" : "house",
-			"object" : "../resources/objects/village_house.obj",
-			"texture" : "../resources/images/village_house.png",
-			"normalMap": "../resources/images/village_house_nm.png",
-			"specularMap" : "../resources/images/black.png",
+			"name" : "turbine",
+			"object" : "../resources/objects/turbine.obj",
+			"texture" : "../resources/images/turbine/turbine_color.png",
+			"normalMap": "../resources/images/turbine/turbine_normal.png",
+			"roughnessMap" : "../resources/images/turbine/turbine_roughness.png",
+			"metallicMap" : "../resources/images/turbine/turbine_metallic.png",
 			"position": {
 				"x" : 39,
 				"y" : 0,
 				"z" : 35
 			}
 		},
-
 		{
 			"name" : "car1",
 			"object" : "../resources/objects/c1.obj",
-			"texture" : "../resources/images/c2.png",
-			"normalMap": "../resources/images/mirror_nm.png",
-			"specularMap" : "../resources/images/black.png",
+			"texture" : "../resources/images/car1/c1.png",
+			"normalMap": "../resources/images/car1/c1_n.png",
+			"metallicMap" : "../resources/images/car1/c1_m.png",
+			"roughnessMap" : "../resources/images/car1/c1_r.png",
 			"position": {
 				"x" : -10,
 				"y" : 0,
@@ -61,9 +49,10 @@
 		{
 			"name" : "car2",
 			"object" : "../resources/objects/c2.obj",
-			"texture" : "../resources/images/c2.png",
-			"normalMap": "../resources/images/mirror_nm.png",
-			"specularMap" : "../resources/images/black.png",
+			"texture" : "../resources/images/car2/c2.png",
+			"normalMap": "../resources/images/car2/c2_n.png",
+			"metallicMap" : "../resources/images/car2/c2_m.png",
+			"roughnessMap" : "../resources/images/car2/c2_r.png",
 			"position": {
 				"x" : -33,
 				"y" : 0,
@@ -73,9 +62,10 @@
 		{
 			"name" : "car3",
 			"object" : "../resources/objects/c3.obj",
-			"texture" : "../resources/images/c3.png",
-			"normalMap": "../resources/images/mirror_nm.png",
-			"specularMap" : "../resources/images/black.png",
+			"texture" : "../resources/images/car3/c3.png",
+			"normalMap": "../resources/images/car3/c3_n.png",
+			"metallicMap" : "../resources/images/car3/c3_m.png",
+			"roughnessMap" : "../resources/images/car3/c3_r.png",
 			"position": {
 				"x" : -55,
 				"y" : 0,
@@ -85,13 +75,14 @@
 		{
 			"name" : "spitfire",
 			"object" : "../resources/objects/spitfire.obj",
-			"texture" : "../resources/images/spitfire.png",
-			"normalMap": "../resources/images/mirror_nm.png",
-			"specularMap" : "../resources/images/black.png",
+			"texture" : "../resources/images/plane/spitfire.png",
+			"normalMap": "../resources/images/plane/spitfire_n.png",
+			"roughnessMap" : "../resources/images/plane/spitfire_r.png",
+			"metallicMap" : "../resources/images/plane/spitfire_m.png",
 			"position": {
 				"x" : 34,
 				"y" : 0,
-				"z" : -100
+				"z" : -70
 			}
 		}
 	],

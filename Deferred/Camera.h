@@ -1,5 +1,4 @@
-#ifndef TURRI_CAMERA
-#define TURRI_CAMERA
+
 
 #include <iostream>
 #include <glm/glm.hpp>
@@ -65,5 +64,3 @@ public:
 
 	void resetFirstEntry();
 };
-
-#endif
