@@ -5,6 +5,7 @@ in vec2 fragUV;
 uniform sampler2D gColor;
 uniform sampler2D gBloom;
 uniform sampler2D debugTexture;
+uniform sampler2D shadowMap;
 
 uniform int pixelation;
 uniform int nightVision;
@@ -53,5 +54,5 @@ void main() {
 			fragColor = vec4(vec3(texture(debugTexture, uv).z), 1.0);
 		}
 	}
-
+	//fragColor = vec4(vec3(texture(shadowMap, uv).r), 1.0);
 }

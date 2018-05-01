@@ -46,8 +46,8 @@ void main() {
 							   atangent.z, abitangent.z, fragNormal.z);
 	vec3 normal = normalTexture * tangentToWorld;
 
-	gDiffuse = vec4(texture(textureData, fragUV).rgb, 1.0);
-	gNormal = vec4(sphereMap(normal), depth, 1.0);
+	gDiffuse = vec4(texture(textureData, fragUV).rgb, 0.0);
+	gNormal = vec4(sphereMap(normal), depth, 0.0);
 	gPosition = vec4(fragPosition, 1.0);
     
     float roug = texture(roughness, fragUV).r;

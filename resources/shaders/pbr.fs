@@ -1,6 +1,6 @@
 #version 330
 
-const int maxlights = 2;
+const int maxlights = 1;
 const float PI = 3.1415926536;
 
 struct Light {
@@ -12,12 +12,18 @@ struct Light {
 in vec2 fragUV;
 
 uniform vec3 viewerPosition;
+uniform mat4 lightViewMatrix;
+uniform mat4 lightProjectionMatrix;
+uniform mat4 worldViewMatrix;
+uniform mat4 worldProjMatrix;
+uniform mat4 lightSpaceMatrix;
 
 uniform sampler2D gDiff;
 uniform sampler2D gNorm;
 uniform sampler2D gPos;
 uniform sampler2D gSpec;
 uniform sampler2D skybox;
+uniform sampler2D shadow;
 
 uniform samplerCube cubemap;
 
@@ -69,6 +75,19 @@ float gCookTorrance(float NdotV, float VdotH, float NdotH) {
 	return min(1, v1);
 }
 
+float calcShadow(vec3 eyeDir) {
+	vec4 projectedEyeDir = lightProjectionMatrix * lightViewMatrix * vec4(eyeDir, 1.0);
+	projectedEyeDir = projectedEyeDir / projectedEyeDir.w;
+	
+	vec2 texCoordinates = projectedEyeDir.xy * 0.5 + 0.5;
+	const float bias = 0.005;
+	float closestDepth = texture(shadow, texCoordinates).r;
+	float currentDepth = projectedEyeDir.z * 0.5 + 0.5;
+	//return currentDepth;
+	//return min(currentDepth, closestDepth); 
+	return currentDepth < closestDepth+bias ? 0.0: 1.0;
+}
+
 vec4 calcColor() {
 	vec4 color = vec4(0.0);
 
@@ -80,7 +99,7 @@ vec4 calcColor() {
 	vec3 worldPos = texture(gPos, fragUV).rgb;
 	float roug = material.r;
 	float metal = material.g; 
-
+	
 	vec3 V = normalize(viewerPosition - worldPos);
 	vec3 N = normalize(normalT);
 
@@ -89,9 +108,11 @@ vec4 calcColor() {
 
     vec3 F0 = vec3(0.05);
     F0 = mix(F0, albedo, metal);
-
+	float shad = calcShadow(worldPos);
 	// light
     vec3 debugColor = vec3(0.0);
+	vec3 light = vec3(0.0);
+
 	for (int i = 0; i < maxlights; i++) {
 		Light l = lights[i];
 
@@ -117,17 +138,12 @@ vec4 calcColor() {
 		// Don't have attenuation if it's directional
 		float attenuation = (l.type == 0) ?  1.0 : (5000.0 / (dist * dist));
 
-		color.rgb += l.amb *(diffuse+specular) * attenuation;
-        
+		color.rgb += (l.amb + shad*(1.0-shad*1.75)) *(diffuse+specular) * attenuation;
+		//color.rgb = (diffuse+specular) * attenuation;
         debugColor = F;
-       // debugColor = vec3(D);
-       // debugColor = vec3(G);
 	}
-	//color.rgb /= maxlights;
-	color.rgb += vec3(0.2)*color.rgb;
-	// Uncomment if you wanna see the cubemap implemented
-	//color += (1.0 - roug) * loadCubemap(N, V);
-	//return vec4(color.rgb , 1.0);
+	//color.rgb = (vec3(0.0) + (1.0 - shad)) * color.rgb;
+	//color.rgb *= vec3(shad);
     return vec4(color.rgb, 1.0);
 }
 

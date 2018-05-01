@@ -12,7 +12,7 @@ Camera::Camera():
 	cCameraUp(0.0f, 1.0f, 0.0f),
 	cCameraRight(0.0f, 0.0f, 1.0f),
 	prevMouse(0.0f),
-	velocity(0.05f) {
+	velocity(0.5f) {
 	cCameraRight = glm::normalize(glm::cross(cCameraUp, cCameraFront));
 }
 

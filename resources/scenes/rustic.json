@@ -56,20 +56,20 @@
 			"position": {
 				"x" : -33,
 				"y" : 0,
-				"z" : 35
+				"z" : 20
 			}
 		},
 		{
 			"name" : "car3",
-			"object" : "../resources/objects/c3.obj",
-			"texture" : "../resources/images/car3/c3.png",
-			"normalMap": "../resources/images/car3/c3_n.png",
-			"metallicMap" : "../resources/images/car3/c3_m.png",
-			"roughnessMap" : "../resources/images/car3/c3_r.png",
+			"object" : "../resources/objects/c1.obj",
+			"texture" : "../resources/images/car1/c1.png",
+			"normalMap": "../resources/images/car1/c1_n.png",
+			"metallicMap" : "../resources/images/car1/c1_m.png",
+			"roughnessMap" : "../resources/images/car1/c1_r.png",
 			"position": {
 				"x" : -55,
 				"y" : 0,
-				"z" : 35
+				"z" : 15
 			}
 		},
 		{
@@ -81,7 +81,7 @@
 			"metallicMap" : "../resources/images/plane/spitfire_m.png",
 			"position": {
 				"x" : 34,
-				"y" : 0,
+				"y" : 5,
 				"z" : -70
 			}
 		}
