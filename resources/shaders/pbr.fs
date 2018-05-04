@@ -75,16 +75,15 @@ float gCookTorrance(float NdotV, float VdotH, float NdotH) {
 	return min(1, v1);
 }
 
-float calcShadow(vec3 eyeDir) {
-	vec4 projectedEyeDir = lightProjectionMatrix * lightViewMatrix * vec4(eyeDir, 1.0);
+float calcShadow(vec3 worl) {
+	vec4 projectedEyeDir = lightProjectionMatrix * lightViewMatrix * vec4(worl, 1.0);
 	projectedEyeDir = projectedEyeDir / projectedEyeDir.w;
 	
 	vec2 texCoordinates = projectedEyeDir.xy * 0.5 + 0.5;
 	const float bias = 0.005;
 	float closestDepth = texture(shadow, texCoordinates).r;
 	float currentDepth = projectedEyeDir.z * 0.5 + 0.5;
-	//return currentDepth;
-	//return min(currentDepth, closestDepth); 
+
 	return currentDepth < closestDepth+bias ? 0.0: 1.0;
 }
 

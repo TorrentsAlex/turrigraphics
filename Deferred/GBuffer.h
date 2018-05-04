@@ -45,7 +45,7 @@ public:
 
 	static void sendCubemap(Shader shader, std::string name, GLuint texture);
 	static void sendTexture(Shader shader, std::string name, GLuint texture, int TEXTURE_GL, int unit);
-	static void sendDataToGPU(Vertex *data, int numVertices);
+	static void sendDataToGPU(Vertex &data, int numVertices);
 	static void bindVertexArrayBindBuffer(GLuint vao, GLuint vbo);
 	static void unbindVertexUnbindBuffer();
 

@@ -195,9 +195,9 @@ void GBuffer::closeGBufferAndDepth(int drawSize ,GLuint attachments[], GLuint *d
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void GBuffer::sendDataToGPU(Vertex* data, int numVertices) {
+void GBuffer::sendDataToGPU(Vertex& data, int numVertices) {
 	// Put all the vertices into the VBO
-	glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(Vertex), data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(Vertex), &data, GL_STATIC_DRAW);
 
 	//Draw a set of elements(numVertices) from the VBO as GL_TRIANGLES. The first vertex is in the 0th position
 	glDrawArrays(GL_TRIANGLES, 0, numVertices);

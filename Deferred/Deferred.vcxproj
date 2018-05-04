@@ -192,6 +192,7 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="MaterialManager.h" />
     <ClInclude Include="OBJ.h" />
+    <ClInclude Include="profiler.hpp" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneCreator.h" />
     <ClInclude Include="TextureManager.h" />

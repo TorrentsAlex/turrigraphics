@@ -116,5 +116,8 @@
     <ClInclude Include="FPSLimiter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="profiler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

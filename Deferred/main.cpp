@@ -14,15 +14,16 @@
 #include "InputManager.h"
 #include "TextureManager.h"
 #include "GBuffer.h"
-
+#include "profiler.hpp"
 
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
-const glm::vec2 screenSize = {960, 540};
-//const glm::vec2 screenSize = { 1920, 1080};
+//const glm::vec2 screenSize = {960, 540};
+const glm::vec2 screenSize = { 1920, 1080};
 
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+Utilities::Profiler profiler;
 
 Camera camera;
 FPSLimiter fps = FPSLimiter(true, 60, false);
@@ -67,7 +68,7 @@ struct Quad {
 
 	void draw() {
 		GBuffer::bindVertexArrayBindBuffer(deferredVAO, deferredVBO);
-		GBuffer::sendDataToGPU(object.mesh, object.numVertices);
+		GBuffer::sendDataToGPU(*object.mesh, object.numVertices);
 		GBuffer::unbindVertexUnbindBuffer();
 	}
 	
@@ -337,46 +338,64 @@ void loadScene(std::string sceneToLoad) {
 }
 
 void sendObject(Vertex *data, GameObject object, int numVertices, Shader shader) {
+	auto guard2 = profiler.CreateProfileMarkGuard("Send object");
 	glm::mat4 modelMatrix;
 	glm::mat3 normalMatrix;
 
-	modelMatrix = glm::translate(modelMatrix, object.translate);
+	{
+		auto guard2 = profiler.CreateProfileMarkGuard("GLM");
 
-	if (object.angle != 0) {
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(object.angle), object.rotation);
+		modelMatrix = glm::translate(modelMatrix, object.translate);
+
+		if (object.angle != 0) {
+			modelMatrix = glm::rotate(modelMatrix, glm::radians(object.angle), object.rotation);
+		}
+		modelMatrix = glm::scale(modelMatrix, object.scale);
+		normalMatrix = glm::mat3(glm::transpose(glm::inverse(modelMatrix)));
 	}
-	modelMatrix = glm::scale(modelMatrix, object.scale);
-	normalMatrix = glm::mat3(glm::transpose(glm::inverse(modelMatrix)));
+	
+		GBuffer::sendUniform(shader, "modelMatrix", modelMatrix);
+		GBuffer::sendUniform(shader, "modelMatrix3x3", glm::mat3(modelMatrix));
+		GBuffer::sendUniform(shader, "modelNormalMatrix", normalMatrix);
+	{
+		auto guard2 = profiler.CreateProfileMarkGuard("data GPU");
 
-	GBuffer::sendUniform(shader, "modelMatrix", modelMatrix);
-	GBuffer::sendUniform(shader, "modelMatrix3x3", glm::mat3(modelMatrix));
-	GBuffer::sendUniform(shader, "modelNormalMatrix", normalMatrix);
-
-	GBuffer::sendDataToGPU(data, numVertices);
+		GBuffer::sendDataToGPU(*data, numVertices);
+	}
 }
 
 void renderScene() {
+	{
+		auto guard1 = profiler.CreateProfileMarkGuard("bind VAO BVO");
+		GBuffer::bindVertexArrayBindBuffer(gBVAO, gBVBO);
 
-	GBuffer::bindVertexArrayBindBuffer(gBVAO, gBVBO);
-
-	GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(1.0f));
-
-	for (DecorObjects decor : scene->listObjects) {
-		GBuffer::sendTexture(shaderGBuffer, "textureData", decor.e->getMaterial().textureMap, GL_TEXTURE0, 0);
-		if (decor.e->getMaterial().metallicMap != -1) {
-			GBuffer::sendTexture(shaderGBuffer, "materialMap", decor.e->getMaterial().metallicMap, GL_TEXTURE1, 1);
-			GBuffer::sendTexture(shaderGBuffer, "normalMap", decor.e->getMaterial().normalMap, GL_TEXTURE2, 2);
-			GBuffer::sendTexture(shaderGBuffer, "roughness", decor.e->getMaterial().roughnessMap, GL_TEXTURE3, 3);
-			GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
-		} else {
-			GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", false);
-		}
-
-		sendObject(decor.e->getMesh(), decor.g.at(0), decor.e->getNumVertices(), shaderGBuffer);
-
-		GBuffer::unbindTextures();
+		GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(1.0f));
 	}
+	{
+		auto guard2 = profiler.CreateProfileMarkGuard("loop scene");
 
+		for (DecorObjects decor : scene->listObjects) {
+			
+			{
+				auto guard1 = profiler.CreateProfileMarkGuard("textures");
+				Material m = decor.e->getMaterial();
+				GBuffer::sendTexture(shaderGBuffer, "textureData", m.textureMap, GL_TEXTURE0, 0);
+				if (decor.e->getMaterial().metallicMap != -1) {
+					GBuffer::sendTexture(shaderGBuffer, "materialMap", m.metallicMap, GL_TEXTURE1, 1);
+					GBuffer::sendTexture(shaderGBuffer, "normalMap", m.normalMap, GL_TEXTURE2, 2);
+					GBuffer::sendTexture(shaderGBuffer, "roughness", m.roughnessMap, GL_TEXTURE3, 3);
+					GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
+				}
+				else {
+					GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", false);
+				}
+			}
+			sendObject(decor.e->getMesh(), decor.g.at(0), decor.e->getNumVertices(), shaderGBuffer);
+
+			GBuffer::unbindTextures();
+		}
+	}
+	auto guard3 = profiler.CreateProfileMarkGuard("render terrain");
 	GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(7.0f));
 	GBuffer::sendTexture(shaderGBuffer, "textureData", scene->sTerrain.getMaterial().textureMap, GL_TEXTURE0, 0);
 	GBuffer::sendTexture(shaderGBuffer, "materialMap", scene->sTerrain.getMaterial().metallicMap, GL_TEXTURE1, 1);
@@ -407,7 +426,8 @@ enum class postproces {NORMAL, CUBEMAP, PIXELATION, NIGHTVISION, NORMALMAP} post
 glm::vec3 directionalColor = { 1.0, 1.0, 1.0 };
 glm::vec3 dirPosition = {1.0, 0.0, 1.0};
 float dColor[] = {0.0, 1.0, 0.0};
-float dPos[] = {0.0, 0.0, 0.0};
+float dAngle = { 0.0 };
+float dHeight = {0.0};
 std::string outputname = "image_name.bmp";
 
 static int debutTexture = 0;
@@ -423,7 +443,13 @@ void GUI() {
 		if (ImGui::ColorEdit3("dir color", dColor)) {
 			directionalColor = glm::vec3(dColor[0], dColor[1], dColor[2]);
 		}
-		ImGui::SliderFloat3("dir direction", (float*)&scene->sLights.at(0).lPosition, -1.0f, 1.0f);
+		if (ImGui::SliderFloat("dir angle", &dAngle, 0.0f, 360.0f)) {
+			scene->sLights.at(0).lPosition.x = 100.0*glm::cos(glm::radians(dAngle));
+			scene->sLights.at(0).lPosition.z = 100.0*glm::sin(glm::radians(dAngle));
+		}
+		if (ImGui::SliderFloat("dir height", &dHeight, 10.0f, 400.0f)) {
+			scene->sLights.at(0).lPosition.y = dHeight;
+		}
 		
 		ImGui::ColorEdit3("point color", (float*)&scene->sLights.at(1).lAmbient);
 		ImGui::SliderFloat3("point position", (float*)&scene->sLights.at(1).lPosition, -100.0f, 100.0f);
@@ -503,7 +529,6 @@ int main(int argc, char** argv) {
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	loadScene("../resources/scenes/rustic.json");
-
 	glEnable(GL_BLEND);
 	bool isOpen = true;
 	while (isOpen) {
@@ -513,7 +538,12 @@ int main(int argc, char** argv) {
 		// Handle inputs
 
 		ImGui_ImplSdlGL3_NewFrame(window.getWindow());
-		GUI();
+		{
+			GUI();
+			profiler.DrawProfilerToImGUI(1);
+		}
+		profiler.AddProfileMark(Utilities::Profiler::MarkerType::BEGIN, 0, "loop");
+
 		//std::cout << SDL_GetTicks() << ": GUI" << std::endl;
 
 		{
@@ -529,6 +559,8 @@ int main(int argc, char** argv) {
 		glDisable(GL_BLEND);
 		// Geometry pass
 		{
+			auto guard1 = profiler.CreateProfileMarkGuard("G-buffer");
+
 			// Frame buffer for GBuffer
 			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -553,9 +585,11 @@ int main(int argc, char** argv) {
 		glEnable(GL_BLEND);
 
 		glm::mat4 lighProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.1f, 2001.0f);
-		glm::mat4 lightView = glm::lookAt(glm::vec3(100.0, 100.0, 0.0), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightView = glm::lookAt(scene->sLights.at(0).lPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		// SHADOW pass
 		{
+			auto guard2 = profiler.CreateProfileMarkGuard("shadow");
+
 			glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 			glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -570,7 +604,9 @@ int main(int argc, char** argv) {
 		//std::cout << SDL_GetTicks() << ": Geometry pass" << std::endl;
 		glDisable(GL_DEPTH_TEST);
 		// SKYBOX
-		{			
+		{		
+			auto guard3 = profiler.CreateProfileMarkGuard("skybox");
+
 			glBindFramebuffer(GL_FRAMEBUFFER, skyboxBuffer);
 			// skybox	
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -599,6 +635,8 @@ int main(int argc, char** argv) {
 
 		// lighting pass
 		{
+			auto guard4 = profiler.CreateProfileMarkGuard("PBR - lighting");
+
 			glBindFramebuffer(GL_FRAMEBUFFER, lihgtingBuffer);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -628,10 +666,11 @@ int main(int argc, char** argv) {
 				GBuffer::sendUniform(shaderPBR, "lights["+ std::to_string(count) +"].type", l.getType());
 				if (l.getType() == LIGHT_DIRECTIONAL) {
 					GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].amb", directionalColor);
+					GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].pos", -l.getPosition());
 				} else {
 					GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].amb", l.getAmbient());
+					GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].pos", l.getPosition());
 				}
-				GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].pos", l.getPosition());
 				++count;
 			}
 
@@ -642,6 +681,8 @@ int main(int argc, char** argv) {
 		//std::cout << SDL_GetTicks() << ": Lighting pass" << std::endl;
 		// Bloom 
 		{
+			auto guard5 = profiler.CreateProfileMarkGuard("Bloom");
+
 			GBuffer::use(shaderBlur);
 
 			for (int i = 0; i < 2; i++) {
@@ -665,6 +706,8 @@ int main(int argc, char** argv) {
 		
 		// Final stack
 		{
+			auto guard6 = profiler.CreateProfileMarkGuard("Final stack");
+
 			GBuffer::use(shaderFinal);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
@@ -680,14 +723,24 @@ int main(int argc, char** argv) {
 
 			GBuffer::unuse(shaderFinal);
 		}
+
 		//std::cout << SDL_GetTicks() << ": final pass" << std::endl;
+		{
+			auto guard6 = profiler.CreateProfileMarkGuard("Imgui Render");
 
-		ImGui::Render();
+			ImGui::Render();
+		}
+		{//std::cout << SDL_GetTicks() << ": render and sqa pass" << std::endl;
+			auto guard6 = profiler.CreateProfileMarkGuard("sync");
 
-		window.swapBuffer();
-		//std::cout << SDL_GetTicks() << ": render and sqa pass" << std::endl;
-
-		fps.forceSynchronization();
+			fps.forceSynchronization();
+		}
+		{
+			auto guard6 = profiler.CreateProfileMarkGuard("swap buffer");
+			window.swapBuffer();
+		}
+		
+		profiler.AddProfileMark(Utilities::Profiler::MarkerType::END, 0, "loop");
 	}
 
 	ImGui_ImplSdlGL3_Shutdown();

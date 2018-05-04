@@ -2,8 +2,8 @@
 	"type" : "directional",
 	"power" : 1,
 	"position" : {
-		"x" : -100.0,
-		"y" : -100.0,
+		"x" : 100.0,
+		"y" : 100.0,
 		"z" : 0.0
 	},
 	"direction" : {
