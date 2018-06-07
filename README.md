@@ -1,5 +1,13 @@
-# Deferred Shading
+# TurriGraphics
 
-Implementation of PBR lighting with a deferred shading technique
+#### C++ OpenGL engine for learning purpose
 
-![](resources/images/picture.PNG)
+## Features
+- Deferred rendering
+- PBR materials
+- Water rendering
+
+## Models
+The cars and the aircraft are from https://sketchfab.com/kryik1023 
+
+![](resources/images/water_rendering.png)
