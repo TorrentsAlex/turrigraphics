@@ -17,7 +17,25 @@
 		"texture": "../resources/images/stonefloor/basecolor.png",
 		"normalMap": "../resources/images/stonefloor/normal.png",
 		"roughnessMap" : "../resources/images/stonefloor/roughness.png",
-		"metallicMap" : "../resources/images/stonefloor/metallic.png"
+		"metallicMap" : "../resources/images/stonefloor/metallic.png",
+		"position": {
+			"x" : 0,
+			"y" : 0,
+			"z" : 0
+		}
+	},
+	"water": {
+		"name" : "Water",
+		"object": "../resources/objects/water.obj",
+		"texture": "../resources/images/water/diffuse.png",
+		"normalMap": "../resources/images/water/matchingNormalMap.png",
+		"roughnessMap" : "../resources/images/water/waterDUDV.png",
+		"metallicMap" : "../resources/images/stonefloor/metallic.png",
+		"position": {
+			"x" : 0,
+			"y" : 0,
+			"z" : 0
+		}
 	},
 	"decoration" : [
 		{
@@ -26,9 +44,9 @@
 			"texture" : "../resources/images/turbine/turbine_color.png",
 			"normalMap": "../resources/images/turbine/turbine_normal.png",
 			"roughnessMap" : "../resources/images/turbine/turbine_roughness.png",
-			"metallicMap" : "../resources/images/turbine/turbine_metallic.png",
+			"mdetallicMap" : "../resources/images/turbine/turbine_metallic.png",
 			"position": {
-				"x" : 39,
+				"x" : 45,
 				"y" : 0,
 				"z" : 35
 			}
@@ -42,7 +60,7 @@
 			"roughnessMap" : "../resources/images/car1/c1_r.png",
 			"position": {
 				"x" : -10,
-				"y" : 0,
+				"y" : -20,
 				"z" : 35
 			}
 		},
@@ -55,7 +73,7 @@
 			"roughnessMap" : "../resources/images/car2/c2_r.png",
 			"position": {
 				"x" : -33,
-				"y" : 0,
+				"y" : -20,
 				"z" : 20
 			}
 		},

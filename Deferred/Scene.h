@@ -16,6 +16,7 @@ class Scene {
 public:
 	Entity sSkybox;
 	Entity sTerrain;
+	Entity sWater;
 
 	GLuint sCubemap;
 

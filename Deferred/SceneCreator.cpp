@@ -173,6 +173,27 @@ void SceneCreator::populateTerrain(Scene * scene, Json::Value terrain) {
 	metalMaterial.normalMap = normalTerrain;
 	scene->setTerrain(objTerrain, textureTerrain, metalMaterial);
 
-	metalMaterial.metallicMap = -1;
+	// Waer
+	OBJ objWater = Geometry::LoadModelFromFile(terrain["water"]["object"].asString());
 
+	GLuint texturewater = TextureManager::Instance().getTextureID(terrain["water"]["texture"].asString());
+	GLuint normalwater = TextureManager::Instance().getTextureID(terrain["water"]["normalMap"].asString());
+
+	GLuint metallic = TextureManager::Instance().getTextureID(terrain["water"]["metallicMap"].asString());
+	GLuint roughness = TextureManager::Instance().getTextureID(terrain["water"]["roughnessMap"].asString());
+	GameObject waterObject;
+	waterObject.angle = 0;
+	waterObject.translate = glm::vec3(terrain["water"]["position"]["x"].asFloat(),
+		terrain["water"]["position"]["y"].asFloat(),
+		terrain["water"]["position"]["z"].asFloat());;
+	waterObject.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	waterObject.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	metalMaterial.textureMap = texturewater;
+	metalMaterial.roughnessMap = roughness;
+	metalMaterial.metallicMap = metallic;
+	metalMaterial.normalMap = normalwater;
+	scene->sWater.setOBJ(objWater);
+	scene->sWater.setMaterial(metalMaterial);
+	scene->sWater.setGameObject(waterObject);
 }

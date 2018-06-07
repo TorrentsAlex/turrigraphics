@@ -36,6 +36,8 @@ public:
 	float pitch;
 	float velocity;
 
+	float up = 1.0f;
+
 	bool firstEntry = true;
 
 	Camera();
@@ -48,6 +50,7 @@ public:
 	void setViewMatrix();
 	void setCameraPosition(glm::vec3 pos);
 	void setCameraFront(glm::vec3 front);
+	void calcCameraFront();
 	float getAngle();
 
 	float getFar();

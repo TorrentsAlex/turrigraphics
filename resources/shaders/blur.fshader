@@ -33,7 +33,7 @@ void main() {
   finalColor = texture(gLuminance, fragUV);
 
    if (blurType == 0) {
-    finalColor = horitzontalBlur();
+      finalColor = horitzontalBlur();
    } else {
      finalColor = verticalBlur();
    }

@@ -20,7 +20,7 @@ void Scene::setSkyBox(OBJ object, GLuint texture) {
 void Scene::setTerrain(OBJ object, GLuint texture, Material material) {
 	GameObject terrainObject;
 	terrainObject.angle = 0;
-	terrainObject.translate = glm::vec3(0.0f, 0.0f, 0.0f);
+	terrainObject.translate = glm::vec3(0.0f, -20.0f, 0.0f);
 	terrainObject.scale = glm::vec3(10.0f, 10.0f, 10.0f);
 	terrainObject.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	sTerrain.setId("terrain");

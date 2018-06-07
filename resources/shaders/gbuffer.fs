@@ -11,12 +11,6 @@ uniform sampler2D materialMap;
 uniform sampler2D normalMap;
 uniform sampler2D roughness;
 
-uniform int haveMaterialMap;
-
-uniform vec2 ab;
-uniform vec3 viewerPosition;
-uniform mat4 projectionMatrix;
-
 out vec4 gDiffuse;
 out vec4 gNormal;
 out vec4 gPosition;
@@ -46,8 +40,8 @@ void main() {
 							   atangent.z, abitangent.z, fragNormal.z);
 	vec3 normal = normalTexture * tangentToWorld;
 
-	gDiffuse = vec4(texture(textureData, fragUV).rgb, 0.0);
-	gNormal = vec4(sphereMap(normal), depth, 0.0);
+	gDiffuse = vec4(texture(textureData, fragUV).rgb, 1.0);
+	gNormal = vec4(sphereMap(normal), depth, 1.0);
 	gPosition = vec4(fragPosition, 1.0);
     
     float roug = texture(roughness, fragUV).r;

@@ -45,7 +45,9 @@ GLuint deferredVAO , deferredVBO;
 GLuint gBVAO, gBVBO;
 GLuint skyboxVAO, skyboxVBO;
 GLuint frameBuffer;
-GLuint buffNOR, buffDIF, buffPOS, buffSPEC;
+GLuint reflectionGBuffer, buffNOR, buffDIF, buffPOS, buffSPEC;
+GLuint reflectionBuffer, buffREFRACTION;
+GLuint buffNOR2, buffDIF2, buffPOS2, buffSPEC2, buffREFLECTION;
 GLuint depthBuffer;
 
 // Lighting Pass
@@ -59,6 +61,8 @@ GLuint buffBLOOM[2];
 GLuint shadowTexture, shadowFBO;
 
 void moveCameraWithKeyboard();
+void sendObject(Vertex *data, GameObject object, int numVertices, Shader shader);
+glm::vec3 directionalColor = { 1.0, 1.0, 1.0 };
 
 struct Quad {
 	OBJ object;
@@ -73,6 +77,147 @@ struct Quad {
 	}
 	
 } quad;
+
+struct Water {
+	Entity water;
+	GLuint waterVAO, waterVBO;
+	GLuint frameBuffer, texture;
+	Shader shader;
+
+	float moveVelocity = 0.035f;
+	float moveFactor = 0.0f;
+	float shineDamper = 40.0f;
+	float reflectivity = 10.0f;
+	float waveStrength = 0.015f;
+	float textureScaleFactor = 7.0f;
+	float fresnelFactor = 1.0f;
+	float waterNumVertexs;
+
+	Water() {
+	}
+	Water(Entity w) { water = w; }
+
+	void GUI() {
+		if (ImGui::CollapsingHeader("Water")) {
+			ImGui::Text("move Factor  %f", &moveFactor);
+			ImGui::SliderFloat("fresnelFactor", &fresnelFactor, 1.0f, 15.0f);
+			ImGui::SliderFloat("shine  ", &shineDamper, 10.0f, 100.0f);
+			ImGui::SliderFloat("wave strenght ", &waveStrength, 0.00f, 0.030f);
+			ImGui::SliderFloat("reflectivity ", &reflectivity, 0.2f, 15.0f);
+			ImGui::SliderFloat("dudv Velocity", &moveVelocity, 0.005f, 0.5f);
+			ImGui::SliderFloat("texture Scale", &textureScaleFactor, 1.0f, 15.0f);
+		}
+	}
+
+	void initShaders() {
+
+		shader = GBuffer::createShader("../resources/shaders/water.vs", "../resources/shaders/water.fs");
+		// AttRibutes
+
+		//GBuffer::addAttribute(shader, "vertexPosition");
+		//GBuffer::addAttribute(shader, "vertexNormal");
+		//GBuffer::addAttribute(shader, "vertexUV");
+		//GBuffer::addAttribute(shader, "vertexTangent");
+		//GBuffer::addAttribute(shader, "vertexBitangent");
+
+		GBuffer::linkShaders(shader);
+	}
+
+	void init() {
+		initShaders();
+
+		glGenVertexArrays(1, &waterVAO);
+		glGenBuffers(1, &waterVBO);
+
+		//Generate the VBO if it isn't already generated
+		//This is for preventing a memory leak if someone calls twice the init method
+		glBindVertexArray(waterVBO);
+
+
+		//Bind the buffer object. YOU MUST BIND  the buffer vertex object before binding attributes
+		glBindBuffer(GL_ARRAY_BUFFER, waterVBO);
+
+		//Connect the xyz to the "vertexPosition" attribute of the vertex shader
+		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexPosition"));
+		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexUV"));
+		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexNormal"));
+		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexTangent"));
+		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexBitangent"));
+
+
+		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexPosition"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexUV"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
+		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexTangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexBitangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
+
+		// unbind the VAO and VBO
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		GBuffer::initFrameBuffer(&frameBuffer);
+		GBuffer::genTexture(&texture, GL_COLOR_ATTACHMENT0, screenSize);
+		GLuint attachmentsV[1] = { GL_COLOR_ATTACHMENT0 };
+
+		GBuffer::closeGBufferAndDepth(1, attachmentsV, &depthBuffer, screenSize);
+	}
+	
+	void update() {
+		
+		glBindBuffer(GL_ARRAY_BUFFER, waterVBO);
+		Vertex* buff = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+		if (buff == nullptr) return;
+		for (int i = 0; i < scene->sWater.getNumVertices(); i++) {
+			buff[i].position.y = 5.0f;
+		}
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		///---------------------------------------------
+
+	}
+	
+	void draw() {
+		moveFactor += moveVelocity * 0.16;
+		if (moveFactor > 1.0) moveFactor = 0.0f;
+
+		glEnable(GL_DEPTH_TEST);
+
+		GBuffer::use(this->shader);
+
+		GBuffer::sendTexture(shader, "textureRefraction", buffALBEDO, GL_TEXTURE0, 0);
+		GBuffer::sendTexture(shader, "textureReflection", buffREFLECTION, GL_TEXTURE1, 1);
+		GBuffer::sendTexture(shader, "dudvMap", scene->sWater.eMaterial.roughnessMap, GL_TEXTURE2, 2);
+		GBuffer::sendTexture(shader, "normalMap", scene->sWater.eMaterial.normalMap, GL_TEXTURE3, 3);
+
+		GBuffer::sendUniform(shader, "moveFactor", moveFactor);
+		GBuffer::sendUniform(shader, "fresnelFactor", fresnelFactor);
+		GBuffer::sendUniform(shader, "waveStrenght", waveStrength);
+		GBuffer::sendUniform(shader, "shineDamper", shineDamper);
+		GBuffer::sendUniform(shader, "reflectivity", reflectivity);
+		GBuffer::sendUniform(shader, "lightPosition", scene->sLights[0].lPosition);
+		GBuffer::sendUniform(shader, "lightColor", directionalColor);
+		GBuffer::sendUniform(shader, "textureScaleFactor", glm::vec2(textureScaleFactor));
+
+		GBuffer::bindVertexArrayBindBuffer(waterVAO, waterVBO);
+
+		GBuffer::sendUniform(shader, "viewMatrix", camera.getViewMatrix());
+		GBuffer::sendUniform(shader, "projectionMatrix", camera.getProjectionCamera());
+		GBuffer::sendUniform(shader, "viewerPosition", camera.getPosition());
+
+		sendObject(scene->sWater.getMesh(), scene->sWater.getGameObject(), scene->sWater.getNumVertices(), shaderGBuffer);
+		
+		GBuffer::unbindVertexUnbindBuffer();
+		GBuffer::unuse(this->shader);
+		//glDisable(GL_CLIP_DISTANCE0);
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
+	}
+
+} water;
+
+#pragma region INITIALIZERS
+
 
 float skyboxVertices[] = {
 	// positions          
@@ -183,16 +328,39 @@ void initializeVAOVBO() {
 									GL_COLOR_ATTACHMENT3};
 
 		GBuffer::closeGBufferAndDepth(4, attachments, &depthBuffer, screenSize);
+		// reflection Gbuffer
+		{
+			GBuffer::initFrameBuffer(&reflectionGBuffer);
+			GBuffer::genTexture(&buffDIF2, GL_COLOR_ATTACHMENT0, screenSize);
+			GBuffer::genTexture(&buffNOR2, GL_COLOR_ATTACHMENT1, screenSize);
+			GBuffer::genTexture(&buffPOS2, GL_COLOR_ATTACHMENT2, screenSize);
+			GBuffer::genTexture(&buffSPEC2, GL_COLOR_ATTACHMENT3, screenSize);
 
+			GLuint attachments[4] = { GL_COLOR_ATTACHMENT0,
+				GL_COLOR_ATTACHMENT1,
+				GL_COLOR_ATTACHMENT2,
+				GL_COLOR_ATTACHMENT3 };
+
+			GBuffer::closeGBufferAndDepth(4, attachments, &depthBuffer, screenSize);
+		}
+		{
+			GBuffer::initFrameBuffer(&reflectionBuffer);
+			GBuffer::genTexture(&buffREFLECTION, GL_COLOR_ATTACHMENT0, screenSize);
+
+			GLuint attachLighting[1] = { GL_COLOR_ATTACHMENT0};
+
+			GBuffer::closeGBufferAndDepth(1, attachLighting, &depthBuffer, screenSize);
+		}
 		// LightingPass 
 		{
 			GBuffer::initFrameBuffer(&lihgtingBuffer);
 			GBuffer::genTexture(&buffALBEDO, GL_COLOR_ATTACHMENT0, screenSize);
 			GBuffer::genTexture(&buffLUMINANCE, GL_COLOR_ATTACHMENT1, screenSize);
+			GBuffer::genTexture(&buffREFRACTION, GL_COLOR_ATTACHMENT2, screenSize);
 
-			GLuint attachLighting[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+			GLuint attachLighting[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 
-			GBuffer::closeGBufferAndDepth(2, attachLighting, &depthBuffer, screenSize);
+			GBuffer::closeGBufferAndDepth(3, attachLighting, &depthBuffer, screenSize);
 		}
 
 		// Bloom stack
@@ -272,31 +440,30 @@ void initializeVAOVBO() {
 
 void compileShaders() {
 	std::cout << "compiling shaders" << std::endl;
+	water.initShaders();
 	// Create GBuffer Shader
 	{
-		shaderGBuffer = GBuffer::createShader("../resources/shaders/gbuffer.vshader", "../resources/shaders/gbuffer.fs");
+		shaderGBuffer = GBuffer::createShader("../resources/shaders/gbuffer.vs", "../resources/shaders/gbuffer.fs");
 
 		// AttRibutes
-		GBuffer::addAttribute(shaderGBuffer, "vertPosition");
-		GBuffer::addAttribute(shaderGBuffer, "vertNormal");
-		GBuffer::addAttribute(shaderGBuffer, "vertUV");
+
 
 		GBuffer::linkShaders(shaderGBuffer);
 	}
 	// Create Deferred Shader
 
 	{
-		shaderPBR = GBuffer::createShader("../resources/shaders/quad_transform.vshader", "../resources/shaders/pbr.fs");
+		shaderPBR = GBuffer::createShader("../resources/shaders/quad_transform.vs", "../resources/shaders/pbr.fs");
 
-		GBuffer::addAttribute(shaderPBR, "vertPosition");
-		GBuffer::addAttribute(shaderPBR, "vertNormal");
-		GBuffer::addAttribute(shaderPBR, "vertUV");
+		GBuffer::addAttribute(shaderPBR, "vertexPosition");
+		GBuffer::addAttribute(shaderPBR, "vertexNormal");
+		GBuffer::addAttribute(shaderPBR, "verextUV");
 
 		GBuffer::linkShaders(shaderPBR);
 	}
 	// Create postProcess
 	{
-		shaderBlur = GBuffer::createShader("../resources/shaders/quad_transform.vshader", "../resources/shaders/blur.fshader");
+		shaderBlur = GBuffer::createShader("../resources/shaders/quad_transform.vs", "../resources/shaders/blur.fshader");
 
 		GBuffer::addAttribute(shaderBlur, "vertPosition");
 		GBuffer::addAttribute(shaderBlur, "vertNormal");
@@ -308,11 +475,11 @@ void compileShaders() {
 
 	// Final Stack accumulation
 	{
-		shaderFinal = GBuffer::createShader("../resources/shaders/quad_transform.vshader", "../resources/shaders/shader.fs");
+		shaderFinal = GBuffer::createShader("../resources/shaders/quad_transform.vs", "../resources/shaders/shader.fs");
 
-		GBuffer::addAttribute(shaderFinal, "vertPosition");
-		GBuffer::addAttribute(shaderFinal, "vertNormal");
-		GBuffer::addAttribute(shaderFinal, "vertUV");
+		GBuffer::addAttribute(shaderFinal, "vertexPosition");
+		GBuffer::addAttribute(shaderFinal, "vertexNormal");
+		GBuffer::addAttribute(shaderFinal, "verextUV");
 
 		GBuffer::linkShaders(shaderFinal);
 
@@ -329,12 +496,18 @@ void compileShaders() {
 	}
 }
 
+#pragma endregion
+
+#pragma region RENDER
+
+
 void loadScene(std::string sceneToLoad) {
 	if (scene) {
 		delete scene;
 	}
 	scene = new Scene();
 	SceneCreator::Instance().createScene(sceneToLoad, *scene);
+	water.water = scene->sWater;
 }
 
 void sendObject(Vertex *data, GameObject object, int numVertices, Shader shader) {
@@ -365,12 +538,9 @@ void sendObject(Vertex *data, GameObject object, int numVertices, Shader shader)
 }
 
 void renderScene() {
-	{
-		auto guard1 = profiler.CreateProfileMarkGuard("bind VAO BVO");
 		GBuffer::bindVertexArrayBindBuffer(gBVAO, gBVBO);
-
 		GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(1.0f));
-	}
+	
 	{
 		auto guard2 = profiler.CreateProfileMarkGuard("loop scene");
 
@@ -380,29 +550,26 @@ void renderScene() {
 				auto guard1 = profiler.CreateProfileMarkGuard("textures");
 				Material m = decor.e->getMaterial();
 				GBuffer::sendTexture(shaderGBuffer, "textureData", m.textureMap, GL_TEXTURE0, 0);
-				if (decor.e->getMaterial().metallicMap != -1) {
-					GBuffer::sendTexture(shaderGBuffer, "materialMap", m.metallicMap, GL_TEXTURE1, 1);
-					GBuffer::sendTexture(shaderGBuffer, "normalMap", m.normalMap, GL_TEXTURE2, 2);
-					GBuffer::sendTexture(shaderGBuffer, "roughness", m.roughnessMap, GL_TEXTURE3, 3);
-					GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
-				}
-				else {
-					GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", false);
-				}
+				GBuffer::sendTexture(shaderGBuffer, "materialMap", m.metallicMap, GL_TEXTURE1, 1);
+				GBuffer::sendTexture(shaderGBuffer, "normalMap", m.normalMap, GL_TEXTURE2, 2);
+				GBuffer::sendTexture(shaderGBuffer, "roughness", m.roughnessMap, GL_TEXTURE3, 3);
+				GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
+				
 			}
 			sendObject(decor.e->getMesh(), decor.g.at(0), decor.e->getNumVertices(), shaderGBuffer);
 
 			GBuffer::unbindTextures();
 		}
 	}
+
 	auto guard3 = profiler.CreateProfileMarkGuard("render terrain");
-	GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(7.0f));
+	GBuffer::sendUniform(shaderGBuffer, "textureScaleFactor", glm::vec2(5.0f));
+
 	GBuffer::sendTexture(shaderGBuffer, "textureData", scene->sTerrain.getMaterial().textureMap, GL_TEXTURE0, 0);
 	GBuffer::sendTexture(shaderGBuffer, "materialMap", scene->sTerrain.getMaterial().metallicMap, GL_TEXTURE1, 1);
 	GBuffer::sendTexture(shaderGBuffer, "normalMap", scene->sTerrain.getMaterial().normalMap, GL_TEXTURE2, 2);
 	GBuffer::sendTexture(shaderGBuffer, "roughness", scene->sTerrain.getMaterial().roughnessMap, GL_TEXTURE3, 3);
 
-	GBuffer::sendUniform(shaderGBuffer, "haveMaterialMap", true);
 	sendObject(scene->sTerrain.getMesh(), scene->sTerrain.getGameObject(), scene->sTerrain.getNumVertices(), shaderGBuffer);
 	GBuffer::unbindTextures();
 
@@ -421,18 +588,29 @@ void renderShadowsScene() {
 	GBuffer::unbindVertexUnbindBuffer();
 }
 
+#pragma endregion
+
 enum class postproces {NORMAL, CUBEMAP, PIXELATION, NIGHTVISION, NORMALMAP} postpro;
 
-glm::vec3 directionalColor = { 1.0, 1.0, 1.0 };
 glm::vec3 dirPosition = {1.0, 0.0, 1.0};
-float dColor[] = {0.0, 1.0, 0.0};
+float dColor[] = {1.0, 1.0, 1.0};
 float dAngle = { 0.0 };
 float dHeight = {0.0};
 std::string outputname = "image_name.bmp";
 
 static int debutTexture = 0;
-
 void GUI() {
+	water.GUI();
+	if (ImGui::CollapsingHeader("GBuffer Water")) {
+		ImGui::Image((ImTextureID)buffREFLECTION, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+		ImGui::Image((ImTextureID)buffNOR2, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+		ImGui::Image((ImTextureID)buffPOS2, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+		ImGui::Image((ImTextureID)buffSkybox, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+	}
+	if (ImGui::CollapsingHeader("PBR")) {
+		ImGui::Image((ImTextureID)buffALBEDO, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+	}
+
 	if (ImGui::CollapsingHeader("window")) {
 		ImGui::Text("FPS: %f", fps._fps);
 		ImGui::Checkbox("limit fps", &fps._enable);
@@ -513,9 +691,9 @@ int main(int argc, char** argv) {
 
 	// Initialize all objects
 	//WindowFlags::FULLSCREEN
-	window.create("Deferred Shading, Alex Torrents", screenSize.x, screenSize.y, 0);
+	window.create("Deferred Shading, Alex Torrents", screenSize.x, screenSize.y, (int)WindowFlags::FULLSCREEN);
 	InputManager::Instance().init();
-
+	water.init();
 	// IMGUI INIT
 	std::string imInit = ImGui_ImplSdlGL3_Init(window.getWindow()) ? "true" : "false";
 	std::cout << "Imgui Init " << imInit << std::endl;
@@ -533,9 +711,9 @@ int main(int argc, char** argv) {
 	bool isOpen = true;
 	while (isOpen) {
 		fps.startSynchronization();
-		//std::cout << SDL_GetTicks() << ": start frame" << std::endl;
 		// UPDATE
 		// Handle inputs
+		water.update();
 
 		ImGui_ImplSdlGL3_NewFrame(window.getWindow());
 		{
@@ -543,8 +721,6 @@ int main(int argc, char** argv) {
 			profiler.DrawProfilerToImGUI(1);
 		}
 		profiler.AddProfileMark(Utilities::Profiler::MarkerType::BEGIN, 0, "loop");
-
-		//std::cout << SDL_GetTicks() << ": GUI" << std::endl;
 
 		{
 			if (InputManager::Instance().handleInput() == -1) {
@@ -554,8 +730,8 @@ int main(int argc, char** argv) {
 				moveCameraWithKeyboard();
 			}
 		}
-		//std::cout << SDL_GetTicks() << ": input" << std::endl;
 		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_CLIP_DISTANCE0);
 		glDisable(GL_BLEND);
 		// Geometry pass
 		{
@@ -564,8 +740,7 @@ int main(int argc, char** argv) {
 			// Frame buffer for GBuffer
 			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
+			
 			// GBuffer Pass
 			GBuffer::use(shaderGBuffer);
 
@@ -583,10 +758,10 @@ int main(int argc, char** argv) {
 			GBuffer::unuse(shaderGBuffer);
 		}
 		glEnable(GL_BLEND);
-
+		
 		glm::mat4 lighProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.1f, 2001.0f);
 		glm::mat4 lightView = glm::lookAt(scene->sLights.at(0).lPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		// SHADOW pass
+		//// SHADOW pass
 		{
 			auto guard2 = profiler.CreateProfileMarkGuard("shadow");
 
@@ -601,9 +776,8 @@ int main(int argc, char** argv) {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			GBuffer::unuse(shaderShadow);
 		}
-		//std::cout << SDL_GetTicks() << ": Geometry pass" << std::endl;
 		glDisable(GL_DEPTH_TEST);
-		// SKYBOX
+		//// SKYBOX
 		{		
 			auto guard3 = profiler.CreateProfileMarkGuard("skybox");
 
@@ -631,8 +805,6 @@ int main(int argc, char** argv) {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			GBuffer::unuse(shaderSkybox);
 		}
-		//std::cout << SDL_GetTicks() << ": skybox pass" << std::endl;
-
 		// lighting pass
 		{
 			auto guard4 = profiler.CreateProfileMarkGuard("PBR - lighting");
@@ -678,8 +850,8 @@ int main(int argc, char** argv) {
 			GBuffer::unuse(shaderPBR);
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
-		//std::cout << SDL_GetTicks() << ": Lighting pass" << std::endl;
-		// Bloom 
+
+		//// Bloom 
 		{
 			auto guard5 = profiler.CreateProfileMarkGuard("Bloom");
 
@@ -702,8 +874,111 @@ int main(int argc, char** argv) {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			GBuffer::unuse(shaderBlur);
 		}
-		//std::cout << SDL_GetTicks() << ": bloom pass" << std::endl;
 		
+		{
+			// REFLECTION
+			// G-Buffer
+			float distance = 2.0 * (camera.cCameraPos.y - 0.0);
+			camera.cCameraPos.y -= distance;
+			//camera.up = -1.0;
+			camera.pitch = -camera.pitch;
+			camera.setViewMatrix();
+			glBindFramebuffer(GL_FRAMEBUFFER, reflectionGBuffer);
+			{
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glEnable(GL_CLIP_DISTANCE0);
+				glEnable(GL_DEPTH_TEST);
+				// GBuffer Pass
+				GBuffer::use(shaderGBuffer);
+
+				// send camera to opengl
+				GBuffer::sendUniform(shaderGBuffer, "viewMatrix", camera.getViewMatrix());
+				GBuffer::sendUniform(shaderGBuffer, "projectionMatrix", camera.getProjectionCamera());
+				GBuffer::sendUniform(shaderGBuffer, "viewerPosition", camera.getPosition());
+				// write geometry to stencil buffer
+
+				// Send objects
+				renderScene();
+
+				// Unbind an unuse programs
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				GBuffer::unuse(shaderGBuffer);
+
+			}
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_CLIP_DISTANCE0);
+			{
+
+				glBindFramebuffer(GL_FRAMEBUFFER, skyboxBuffer);
+				// skybox	
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+				// GBuffer Pass
+				GBuffer::use(shaderSkybox);
+
+				// send camera to opengl
+				GBuffer::sendUniform(shaderSkybox, "view", camera.getViewMatrix());
+				GBuffer::sendUniform(shaderSkybox, "projection", camera.getProjectionCamera());
+
+				glm::mat4 model = glm::translate(glm::mat4(), camera.getPosition());
+				GBuffer::sendUniform(shaderSkybox, "model", model);
+
+				GBuffer::bindVertexArrayBindBuffer(skyboxVAO, skyboxVBO);
+
+				GBuffer::sendCubemap(shaderSkybox, "skybox", scene->sCubemap);
+
+				glDrawArrays(GL_TRIANGLES, 0, 36);
+				GBuffer::unbindVertexUnbindBuffer();
+
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				GBuffer::unuse(shaderSkybox);
+			}
+			{
+				auto guard4 = profiler.CreateProfileMarkGuard("PBR - lighting");
+
+				glBindFramebuffer(GL_FRAMEBUFFER, reflectionBuffer);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+				// Deferred Pass
+				GBuffer::use(shaderPBR);
+
+				GBuffer::sendUniform(shaderPBR, "viewerPosition", camera.getPosition());
+				GBuffer::sendUniform(shaderPBR, "lightViewMatrix", lightView);
+				GBuffer::sendUniform(shaderPBR, "lightProjectionMatrix", lighProjection);
+				GBuffer::sendUniform(shaderPBR, "worldViewMatrix", camera.getViewMatrix());
+				GBuffer::sendUniform(shaderPBR, "worldProjMatrix", camera.getProjectionCamera());
+
+				GBuffer::sendTexture(shaderPBR, "gDiff", buffDIF2, GL_TEXTURE0, 0);
+				GBuffer::sendTexture(shaderPBR, "gNorm", buffNOR2, GL_TEXTURE1, 1);
+				GBuffer::sendTexture(shaderPBR, "gPos", buffPOS2, GL_TEXTURE2, 2);
+				GBuffer::sendTexture(shaderPBR, "gSpec", buffSPEC2, GL_TEXTURE3, 3);
+
+				GBuffer::sendCubemap(shaderPBR, "cubemap", scene->sCubemap);
+
+				int count = 0;
+				for (Light l : scene->sLights) {
+					GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].type", l.getType());
+					if (l.getType() == LIGHT_DIRECTIONAL) {
+						GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].amb", directionalColor);
+						GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].pos", -l.getPosition());
+					}
+					else {
+						GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].amb", l.getAmbient());
+						GBuffer::sendUniform(shaderPBR, "lights[" + std::to_string(count) + "].pos", l.getPosition());
+					}
+					++count;
+				}
+
+				quad.draw();
+				GBuffer::unuse(shaderPBR);
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			camera.cCameraPos.y += distance;
+			camera.pitch = -camera.pitch;
+			//camera.up = +1.0;
+
+			camera.setViewMatrix();
+		}
 		// Final stack
 		{
 			auto guard6 = profiler.CreateProfileMarkGuard("Final stack");
@@ -714,6 +989,7 @@ int main(int argc, char** argv) {
 			GBuffer::sendTexture(shaderFinal, "gColor", buffALBEDO, GL_TEXTURE0, 0);
 			GBuffer::sendTexture(shaderFinal, "gBloom", buffBLOOM[1], GL_TEXTURE1, 1);
 			GBuffer::sendTexture(shaderFinal, "debugTexture", debugTexture, GL_TEXTURE2, 2);
+			//GBuffer::sendTexture(shaderFinal, "water", water.texture, GL_TEXTURE3, 3);
 			GBuffer::sendUniform(shaderFinal, "debugMode", debutTexture);
 
 			GBuffer::sendUniform(shaderFinal, "pixelation", postpro == postproces::PIXELATION ? 1 : 0);
@@ -723,14 +999,21 @@ int main(int argc, char** argv) {
 
 			GBuffer::unuse(shaderFinal);
 		}
-
-		//std::cout << SDL_GetTicks() << ": final pass" << std::endl;
+		{
+			auto guard5 = profiler.CreateProfileMarkGuard("Water");
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBuffer);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			glBlitFramebuffer(
+				0, 0, screenSize.x, screenSize.y, 0, 0, screenSize.x, screenSize.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			water.draw();
+		}
 		{
 			auto guard6 = profiler.CreateProfileMarkGuard("Imgui Render");
 
 			ImGui::Render();
 		}
-		{//std::cout << SDL_GetTicks() << ": render and sqa pass" << std::endl;
+		{
 			auto guard6 = profiler.CreateProfileMarkGuard("sync");
 
 			fps.forceSynchronization();

@@ -34,6 +34,7 @@ uniform Light lights[maxlights];
 
 out vec4 lightColor;
 out vec4 luminance;
+out vec4 refraction;
 
 vec3 dSphereMap(vec2 n) {
 	vec4 t = vec4(n, 0.0, 0.0) * vec4(2.0, 2.0, 0.0, 0.0) + vec4(-1.0, -1.0, 1.0, -1.0);
@@ -84,7 +85,8 @@ float calcShadow(vec3 worl) {
 	float closestDepth = texture(shadow, texCoordinates).r;
 	float currentDepth = projectedEyeDir.z * 0.5 + 0.5;
 
-	return currentDepth < closestDepth+bias ? 0.0: 1.0;
+	//return currentDepth < closestDepth+bias ? 0.0: 1.0;
+	return step(closestDepth+bias, currentDepth);
 }
 
 vec4 calcColor() {
@@ -149,6 +151,16 @@ vec4 calcColor() {
 void main() {
 
 	lightColor = calcColor();
+	vec3 worldPos = texture(gPos, fragUV).rgb;
+
+	// refraction texture
+	float planeHeight = 0.0;
+	if (worldPos.y < planeHeight) {
+		refraction = lightColor;
+	} else {
+		refraction = vec4(0.0);
+	}
+	//refraction = vec4(vec3(worldPos.y), 1.0);
 
 	if (dot(lightColor.rgb, vec3(0.2126, 0.7152, 0.0722)) > 0.8) {
 		luminance = vec4(lightColor.rgb, 1.0);

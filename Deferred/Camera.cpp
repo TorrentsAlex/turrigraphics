@@ -7,12 +7,14 @@ Camera::Camera():
 	cNear(0.1f),
 	cProjectionWidth(15.0f),
 	cProjectionHeight(15.0f),
-	cCameraPos(60.0f, 59.0f, 108.0f),
-	cCameraFront(-1.0f, 0.0f, -1.0f),
+	cCameraPos(0.0f, 59.0f, 108.0f),
+	cCameraFront(1.0f, 0.0f, 1.0f),
 	cCameraUp(0.0f, 1.0f, 0.0f),
 	cCameraRight(0.0f, 0.0f, 1.0f),
 	prevMouse(0.0f),
 	velocity(0.5f) {
+	yaw = -91.0f;
+	pitch = 22.0f;
 	cCameraRight = glm::normalize(glm::cross(cCameraUp, cCameraFront));
 }
 
@@ -45,8 +47,9 @@ void Camera::setPerspectiveCamera() {
 }
 
 void Camera::setViewMatrix() {
+	calcCameraFront();
 	glm::vec3 cameraDirection = glm::normalize(-cCameraFront);
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 up = glm::vec3(0.0f, this->up, 0.0f);
 	cCameraRight = glm::normalize(glm::cross(up, cameraDirection));
 	cCameraUp = glm::normalize(glm::cross(cameraDirection, cCameraRight));
 	cViewMatrix = glm::lookAt(cCameraPos, cCameraPos + cCameraFront, cCameraUp);
@@ -110,14 +113,17 @@ void Camera::rotate(glm::vec2 mousePos) {
 	if (pitch < -89.0f) {
 		pitch = -89.0f;
 	}
+	calcCameraFront();
+	setViewMatrix();
+}
 
+void Camera::calcCameraFront() {
 	glm::vec3 front;
 	front.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
 	front.y = glm::sin(glm::radians(pitch));
 	front.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
 
 	cCameraFront = front;
-	setViewMatrix();
 }
 
 void Camera::resetFirstEntry() {
