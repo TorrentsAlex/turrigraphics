@@ -19,8 +19,8 @@
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
-//const glm::vec2 screenSize = {960, 540};
-const glm::vec2 screenSize = { 1920, 1080};
+const glm::vec2 screenSize = {960, 540};
+//const glm::vec2 screenSize = { 1920, 1080};
 
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 Utilities::Profiler profiler;
@@ -82,7 +82,7 @@ struct Water {
 	Entity water;
 	GLuint waterVAO, waterVBO;
 	GLuint frameBuffer, texture;
-	Shader shader;
+	Shader wshader;
 
 	float moveVelocity = 0.035f;
 	float moveFactor = 0.0f;
@@ -111,16 +111,16 @@ struct Water {
 
 	void initShaders() {
 
-		shader = GBuffer::createShader("../resources/shaders/water.vs", "../resources/shaders/water.fs");
+		wshader = GBuffer::createShader("../resources/shaders/water.vs", "../resources/shaders/water.fs");
 		// AttRibutes
 
-		//GBuffer::addAttribute(shader, "vertexPosition");
-		//GBuffer::addAttribute(shader, "vertexNormal");
-		//GBuffer::addAttribute(shader, "vertexUV");
-		//GBuffer::addAttribute(shader, "vertexTangent");
-		//GBuffer::addAttribute(shader, "vertexBitangent");
+		GBuffer::addAttribute(wshader, "vertexPosition");
+		GBuffer::addAttribute(wshader, "vertexNormal");
+		GBuffer::addAttribute(wshader, "vertexUV");
+		GBuffer::addAttribute(wshader, "vertexTangent");
+		GBuffer::addAttribute(wshader, "vertexBitangent");
 
-		GBuffer::linkShaders(shader);
+		GBuffer::linkShaders(wshader);
 	}
 
 	void init() {
@@ -133,23 +133,22 @@ struct Water {
 		//This is for preventing a memory leak if someone calls twice the init method
 		glBindVertexArray(waterVBO);
 
-
 		//Bind the buffer object. YOU MUST BIND  the buffer vertex object before binding attributes
 		glBindBuffer(GL_ARRAY_BUFFER, waterVBO);
 
 		//Connect the xyz to the "vertexPosition" attribute of the vertex shader
-		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexPosition"));
-		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexUV"));
-		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexNormal"));
-		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexTangent"));
-		glEnableVertexAttribArray(glGetAttribLocation(shader.programID, "vertexBitangent"));
+		glEnableVertexAttribArray(glGetAttribLocation(wshader.programID, "vertexPosition"));
+		glEnableVertexAttribArray(glGetAttribLocation(wshader.programID, "vertexUV"));
+		glEnableVertexAttribArray(glGetAttribLocation(wshader.programID, "vertexNormal"));
+		glEnableVertexAttribArray(glGetAttribLocation(wshader.programID, "vertexTangent"));
+		glEnableVertexAttribArray(glGetAttribLocation(wshader.programID, "vertexBitangent"));
 
 
-		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexPosition"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
-		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexUV"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
-		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexTangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-		glVertexAttribPointer(glGetAttribLocation(shader.programID, "vertexBitangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
+		glVertexAttribPointer(glGetAttribLocation(wshader.programID, "vertexPosition"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+		glVertexAttribPointer(glGetAttribLocation(wshader.programID, "vertexUV"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
+		glVertexAttribPointer(glGetAttribLocation(wshader.programID, "vertexNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+		glVertexAttribPointer(glGetAttribLocation(wshader.programID, "vertexTangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+		glVertexAttribPointer(glGetAttribLocation(wshader.programID, "vertexBitangent"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 
 		// unbind the VAO and VBO
 		glBindVertexArray(0);
@@ -182,35 +181,32 @@ struct Water {
 
 		glEnable(GL_DEPTH_TEST);
 
-		GBuffer::use(this->shader);
+		GBuffer::use(wshader);
 
-		GBuffer::sendTexture(shader, "textureRefraction", buffALBEDO, GL_TEXTURE0, 0);
-		GBuffer::sendTexture(shader, "textureReflection", buffREFLECTION, GL_TEXTURE1, 1);
-		GBuffer::sendTexture(shader, "dudvMap", scene->sWater.eMaterial.roughnessMap, GL_TEXTURE2, 2);
-		GBuffer::sendTexture(shader, "normalMap", scene->sWater.eMaterial.normalMap, GL_TEXTURE3, 3);
+		GBuffer::sendTexture(wshader, "textureRefraction", buffALBEDO, GL_TEXTURE0, 0);
+		GBuffer::sendTexture(wshader, "textureReflection", buffREFLECTION, GL_TEXTURE1, 1);
+		GBuffer::sendTexture(wshader, "dudvMap", scene->sWater.eMaterial.roughnessMap, GL_TEXTURE2, 2);
+		GBuffer::sendTexture(wshader, "normalMap", scene->sWater.eMaterial.normalMap, GL_TEXTURE3, 3);
 
-		GBuffer::sendUniform(shader, "moveFactor", moveFactor);
-		GBuffer::sendUniform(shader, "fresnelFactor", fresnelFactor);
-		GBuffer::sendUniform(shader, "waveStrenght", waveStrength);
-		GBuffer::sendUniform(shader, "shineDamper", shineDamper);
-		GBuffer::sendUniform(shader, "reflectivity", reflectivity);
-		GBuffer::sendUniform(shader, "lightPosition", scene->sLights[0].lPosition);
-		GBuffer::sendUniform(shader, "lightColor", directionalColor);
-		GBuffer::sendUniform(shader, "textureScaleFactor", glm::vec2(textureScaleFactor));
+		GBuffer::sendUniform(wshader, "moveFactor", moveFactor);
+		GBuffer::sendUniform(wshader, "fresnelFactor", fresnelFactor);
+		GBuffer::sendUniform(wshader, "waveStrenght", waveStrength);
+		GBuffer::sendUniform(wshader, "shineDamper", shineDamper);
+		GBuffer::sendUniform(wshader, "reflectivity", reflectivity);
+		GBuffer::sendUniform(wshader, "lightPosition", scene->sLights[0].lPosition);
+		GBuffer::sendUniform(wshader, "lightColor", directionalColor);
+		GBuffer::sendUniform(wshader, "textureScaleFactor", glm::vec2(textureScaleFactor));
 
 		GBuffer::bindVertexArrayBindBuffer(waterVAO, waterVBO);
 
-		GBuffer::sendUniform(shader, "viewMatrix", camera.getViewMatrix());
-		GBuffer::sendUniform(shader, "projectionMatrix", camera.getProjectionCamera());
-		GBuffer::sendUniform(shader, "viewerPosition", camera.getPosition());
+		GBuffer::sendUniform(wshader, "viewMatrix", camera.getViewMatrix());
+		GBuffer::sendUniform(wshader, "projectionMatrix", camera.getProjectionCamera());
+		GBuffer::sendUniform(wshader, "viewerPosition", camera.getPosition());
 
 		sendObject(scene->sWater.getMesh(), scene->sWater.getGameObject(), scene->sWater.getNumVertices(), shaderGBuffer);
 		
 		GBuffer::unbindVertexUnbindBuffer();
-		GBuffer::unuse(this->shader);
-		//glDisable(GL_CLIP_DISTANCE0);
-
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		GBuffer::unuse(wshader);
 	
 	}
 
@@ -265,7 +261,31 @@ float skyboxVertices[] = {
 };
 
 void initializeVAOVBO() {
+	{		
+		glGenVertexArrays(1, &deferredVAO);
+		glGenBuffers(1, &deferredVBO);
 
+		//Generate the VBO if it isn't already generated
+		//This is for preventing a memory leak if someone calls twice the init method
+		glBindVertexArray(deferredVBO);
+
+		//Bind the buffer object. YOU MUST BIND  the buffer vertex object before binding attributes
+		glBindBuffer(GL_ARRAY_BUFFER, deferredVBO);
+
+		//Connect the xyz to the "vertexPosition" attribute of the vertex shader
+		glEnableVertexAttribArray(glGetAttribLocation(shaderPBR.programID, "vertexPosition"));
+		glEnableVertexAttribArray(glGetAttribLocation(shaderPBR.programID, "vertexUV"));
+		glEnableVertexAttribArray(glGetAttribLocation(shaderPBR.programID, "vertexNormal"));
+
+
+		glVertexAttribPointer(glGetAttribLocation(shaderPBR.programID, "vertexPosition"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+		glVertexAttribPointer(glGetAttribLocation(shaderPBR.programID, "vertexUV"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
+		glVertexAttribPointer(glGetAttribLocation(shaderPBR.programID, "vertexNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+		// unbind the VAO and VBO
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0); 
+	}
 	glGenVertexArrays(1, &skyboxVAO);
 	glGenBuffers(1, &skyboxVBO);
 
@@ -389,29 +409,7 @@ void initializeVAOVBO() {
 			GBuffer::closeGBufferAndDepth(1, attachmentsV, &depthBuffer, screenSize);
 		}
 
-		glGenVertexArrays(1, &deferredVAO);
-		glGenBuffers(1, &deferredVBO);
 
-		//Generate the VBO if it isn't already generated
-		//This is for preventing a memory leak if someone calls twice the init method
-		glBindVertexArray(deferredVBO);
-
-		//Bind the buffer object. YOU MUST BIND  the buffer vertex object before binding attributes
-		glBindBuffer(GL_ARRAY_BUFFER, deferredVBO);
-
-		//Connect the xyz to the "vertexPosition" attribute of the vertex shader
-		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexPosition"));
-		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexUV"));
-		glEnableVertexAttribArray(glGetAttribLocation(shaderGBuffer.programID, "vertexNormal"));
-
-
-		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexPosition"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
-		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexUV"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
-		glVertexAttribPointer(glGetAttribLocation(shaderGBuffer.programID, "vertexNormal"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-
-		// unbind the VAO and VBO
-		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	// Generate depth buffer for shadows
@@ -463,11 +461,11 @@ void compileShaders() {
 	}
 	// Create postProcess
 	{
-		shaderBlur = GBuffer::createShader("../resources/shaders/quad_transform.vs", "../resources/shaders/blur.fshader");
+		shaderBlur = GBuffer::createShader("../resources/shaders/quad_transform.vs", "../resources/shaders/blur.fs");
 
-		GBuffer::addAttribute(shaderBlur, "vertPosition");
-		GBuffer::addAttribute(shaderBlur, "vertNormal");
-		GBuffer::addAttribute(shaderBlur, "vertUV");
+		GBuffer::addAttribute(shaderBlur, "vertexPosition");
+		GBuffer::addAttribute(shaderBlur, "vertexNormal");
+		GBuffer::addAttribute(shaderBlur, "vertexUV");
 
 		GBuffer::linkShaders(shaderBlur);
 
@@ -601,10 +599,11 @@ std::string outputname = "image_name.bmp";
 static int debutTexture = 0;
 void GUI() {
 	water.GUI();
-	if (ImGui::CollapsingHeader("GBuffer Water")) {
+	if (ImGui::CollapsingHeader("GBuffer ")) {
+		ImGui::Image((ImTextureID)buffDIF, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+		ImGui::Image((ImTextureID)buffDIF2, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
 		ImGui::Image((ImTextureID)buffREFLECTION, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
-		ImGui::Image((ImTextureID)buffNOR2, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
-		ImGui::Image((ImTextureID)buffPOS2, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
+		ImGui::Image((ImTextureID)shadowTexture, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
 		ImGui::Image((ImTextureID)buffSkybox, ImVec2(screenSize.x / 4, screenSize.y / 4), ImVec2(0.0, 1.0), ImVec2(1.0, 0.0));
 	}
 	if (ImGui::CollapsingHeader("PBR")) {
@@ -691,12 +690,12 @@ int main(int argc, char** argv) {
 
 	// Initialize all objects
 	//WindowFlags::FULLSCREEN
-	window.create("Deferred Shading, Alex Torrents", screenSize.x, screenSize.y, (int)WindowFlags::FULLSCREEN);
+	window.create("Deferred Shading, Alex Torrents", screenSize.x, screenSize.y, 0);
 	InputManager::Instance().init();
 	water.init();
 	// IMGUI INIT
 	std::string imInit = ImGui_ImplSdlGL3_Init(window.getWindow()) ? "true" : "false";
-	std::cout << "Imgui Init " << imInit << std::endl;
+	std::cout << "\nImgui Init " << imInit << std::endl;
 	// Init camera
 	camera.initializeZBuffer(screenSize);
 	camera.setPerspectiveCamera();
@@ -713,7 +712,7 @@ int main(int argc, char** argv) {
 		fps.startSynchronization();
 		// UPDATE
 		// Handle inputs
-		water.update();
+		//water.update();
 
 		ImGui_ImplSdlGL3_NewFrame(window.getWindow());
 		{
@@ -807,7 +806,7 @@ int main(int argc, char** argv) {
 		}
 		// lighting pass
 		{
-			auto guard4 = profiler.CreateProfileMarkGuard("PBR - lighting");
+			auto guard4 = profiler.CreateProfileMarkGuard("PBR - Normal");
 
 			glBindFramebuffer(GL_FRAMEBUFFER, lihgtingBuffer);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -880,7 +879,6 @@ int main(int argc, char** argv) {
 			// G-Buffer
 			float distance = 2.0 * (camera.cCameraPos.y - 0.0);
 			camera.cCameraPos.y -= distance;
-			//camera.up = -1.0;
 			camera.pitch = -camera.pitch;
 			camera.setViewMatrix();
 			glBindFramebuffer(GL_FRAMEBUFFER, reflectionGBuffer);
@@ -934,7 +932,7 @@ int main(int argc, char** argv) {
 				GBuffer::unuse(shaderSkybox);
 			}
 			{
-				auto guard4 = profiler.CreateProfileMarkGuard("PBR - lighting");
+				auto guard4 = profiler.CreateProfileMarkGuard("PBR - lighting reflection");
 
 				glBindFramebuffer(GL_FRAMEBUFFER, reflectionBuffer);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -989,7 +987,6 @@ int main(int argc, char** argv) {
 			GBuffer::sendTexture(shaderFinal, "gColor", buffALBEDO, GL_TEXTURE0, 0);
 			GBuffer::sendTexture(shaderFinal, "gBloom", buffBLOOM[1], GL_TEXTURE1, 1);
 			GBuffer::sendTexture(shaderFinal, "debugTexture", debugTexture, GL_TEXTURE2, 2);
-			//GBuffer::sendTexture(shaderFinal, "water", water.texture, GL_TEXTURE3, 3);
 			GBuffer::sendUniform(shaderFinal, "debugMode", debutTexture);
 
 			GBuffer::sendUniform(shaderFinal, "pixelation", postpro == postproces::PIXELATION ? 1 : 0);
